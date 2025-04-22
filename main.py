@@ -1,11 +1,11 @@
-from readers import BaseReader
+from readers import BaseReader, MeraReader
 from analyzers import BaseAnalyzer
 
 from ui import MainWindow
 
 def main():
     print("Программа запущена.")
-    MainWindow(readers=[], analyzers=[]).run()
+    MainWindow(readers=[MeraReader], analyzers=[]).run()
 
     # Здесь можно будет создать экземпляры ридеров и процессоров
     # Например:

@@ -1,11 +1,11 @@
 from readers import BaseReader, MeraReader
-from analyzers import BaseAnalyzer
+from analyzers import BaseAnalyzer, STFT
 
 from ui import MainWindow
 
 def main():
     print("Программа запущена.")
-    MainWindow(readers=[MeraReader], analyzers=[]).run()
+    MainWindow(readers=[MeraReader], analyzers=[STFT]).run()
 
     # Здесь можно будет создать экземпляры ридеров и процессоров
     # Например:

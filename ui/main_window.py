@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from tkinter import filedialog
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 
 class MainWindow:
@@ -11,9 +12,7 @@ class MainWindow:
         self.reader_instance = None
         self.analyzers = analyzers
         self.analyzer_instance = None
-        
-        self.file_path = None
-        
+                
         self.root = tk.Tk()
         self.root.title("Аналіз .mera/.dat сигналів")
 
@@ -63,19 +62,20 @@ class MainWindow:
             self.analyzer_combo.grid(column=1, row=row, pady=5)
             self.analyzer_combo.bind("<<ComboboxSelected>>", self.on_analyzer_selected)
             self.analyzer_instance = self.analyzers[0]
-            
+                        
         row += 1
 
         ttk.Label(frm, text="Вікно FFT:").grid(column=0, row=row, sticky='e', pady=5)
-        self.window_combo = ttk.Combobox(frm, values=["hann", "hamming", "blackman", "boxcar"])
-        self.window_combo.set("hann")
-        self.window_combo.grid(column=1, row=row, sticky='w')
+        self.window = ttk.Combobox(frm, values=["hann", "hamming", "blackman", "boxcar"])
+        self.window.set("hann")
+        self.window.grid(column=1, row=row, sticky='w')
         row += 1
 
         ttk.Label(frm, text="Кількість ліній спектру:").grid(column=0, row=row, sticky='e', pady=5)
-        self.fft_lines_entry = ttk.Entry(frm)
-        self.fft_lines_entry.insert(0, "4096")
-        self.fft_lines_entry.grid(column=1, row=row, sticky='w')
+        powers_of_two = [2**i for i in range(7, 14)]  # от 512 до 8192
+        self.nperseg = ttk.Combobox(frm, values=powers_of_two, state="readonly")
+        self.nperseg.set(4096)  # Устанавливаем значение по умолчанию
+        self.nperseg.grid(column=1, row=row, sticky='w')
         row += 1
 
         ttk.Label(frm, text="Одиниці сигналу:").grid(column=0, row=row, sticky='e', pady=5)
@@ -96,15 +96,16 @@ class MainWindow:
        
     def on_analyzer_selected(self, event):
         selected_index = self.analyzer_combo.current()
-        self.analyzer_instance = self.analyzer_classes[selected_index]
+        self.analyzer_instance = self.analyzers[selected_index]
         print(f"Вибрано метод: {self.analyzer_instance.__name__}")
         
     def load_file(self, reader):
-        self.reader_instance = reader()
-        file_path = self.reader_instance.load()
-        self.file_path = file_path
-        channels = self.reader_instance.get_channels(file_path)
-        self.update_channels(channels)
+        
+        file_path = reader.load()
+        if file_path:
+            self.reader_instance = reader(filepath=file_path)
+            channels = self.reader_instance.get_channels()
+            self.update_channels(channels)
               
       
     def update_channels(self, channels: list):
@@ -125,20 +126,41 @@ class MainWindow:
         
         start_time = self.start_time_entry.get()
         end_time = self.end_time_entry.get()
-        fft_lines = self.fft_lines_entry.get()
+        
+        nperseg = int(self.nperseg.get())
          
-        window = self.window_combo.get()
+        window = self.window.get()
         
         units = self.unit_combo.get()
         transform = self.transform_combo.get()
         
+        self.analyzer_instance = self.analyzer_instance(
+            nperseg=nperseg, 
+            window=window, 
+        )
         for selected_channel in selected_channels:
-            self.analyze_channel(ch_name=selected_channel)
+            sampling_rate = self.reader_instance.get_sampling_rate(selected_channel)
+            self.analyze_channel(ch_name=selected_channel, sampling_rate=sampling_rate)
 
-        print(f"Аналізуємо: {selected_channels}, {start_time}-{end_time} c, {window}, {fft_lines}, {units}, {transform}")        
+        print(f"Аналізуємо: {selected_channels}, {start_time}-{end_time} c, {window}, {nperseg}, {units}, {transform}")        
         
-    def analyze_channel(self, ch_name: str):
-        signal = self.reader_instance.read_channel(self.file_path, ch_name)
+    def analyze_channel(self, ch_name: str = '', sampling_rate: float = 1.0):
+        signal = self.reader_instance.read_channel(ch_name)
+        result = self.analyzer_instance.analyze(signal=signal, sampling_rate=sampling_rate)
+        frequencies, times, amplitudes = result
+        frequency, time, max_amplitudes = self.analyzer_instance.find_peak_frequency_time(signal=result, min_frequency=5)
+        print('frequency ==>', frequency)
+        print('frequency ==>', time)
+        print('frequency ==>', max_amplitudes)
+        plt.figure(figsize=(10, 5))
+        plt.plot(frequencies, max_amplitudes, label=f'Spectrum at t = {time:.2f}s')
+        plt.xlabel('Frequency (Hz)')
+        plt.ylabel('Amplitude')
+        plt.title('Spectrum at Peak Amplitude')
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
         # if polyTX == 0:
         #     signal = k1 * (signal - k0)
         # else:

@@ -6,47 +6,60 @@ import os
 
 from .base import BaseReader
 
+from utils.helpers import deep_get
+
 class MeraReader(BaseReader):
     label = "MERA файл (.mera)"
     
-    def load(self):
+    def __init__(self, filepath: str = ''):
+        self.filepath = filepath
+    
+    @staticmethod
+    def load():
         mera_path = filedialog.askopenfilename(filetypes=[("MERA files", "*.mera")])
         return mera_path
     
-    def get_file_meta(self, filepath: str):
-        if not filepath:
+    def get_sampling_rate(self, ch_name: str = ''):
+        meta = self.get_file_meta()
+        return float(deep_get(meta, [ch_name, 'freq'], 0))
+    
+    def get_file_meta(self):
+        if not self.filepath:
             return None
        
         config = configparser.ConfigParser(strict=False)
-        config.read(filepath, encoding='windows-1251')
-        return {s: config[s] for s in config.sections() if s != 'MERA'}
+        config.read(self.filepath, encoding='windows-1251')
+        return {section: dict(config[section]) for section in config.sections()}
     
-    def get_channels(self, filepath):
-        meta = self.get_file_meta(filepath=filepath)
-        return meta.keys()
+    def get_channels(self):
+        meta = self.get_file_meta()
+        
+        return [name for name in meta.keys() if name.lower() != 'mera']
+
     
-    def read_channel(self, filepath, channel):
+    def read_channel(self, channel):
         # global mera_path, parameters
         
-        if not filepath:
+        if not self.filepath:
             return None
        
-        meta = self.get_file_meta(filepath=filepath)
+        meta = self.get_file_meta()
         y_format = meta.get("YFormat", "I2")
+        freq = deep_get(meta, [channel, 'freq'], 0)
         step = float(meta.get("Step", 1.0))
-        freq = float(meta.get("Freq", 1.0 / step))
+
         k0 = float(meta.get("k0", 0))
         k1 = float(meta.get("k1", 1))
         polyTX = int(meta.get("PolyTX", 0))
         y_units = meta.get("YUnits", "В").lower()
-        
+
         dtype_map = {
             "I1": np.int8, "UI1": np.uint8,
             "I2": np.int16, "UI2": np.uint16,
             "I4": np.int32, "I8": np.int64,
             "R4": np.float32, "R8": np.float64
         }
-        dat_path = os.path.join(os.path.dirname(filepath), channel + ".dat")
+        dat_path = os.path.join(os.path.dirname(self.filepath), channel + ".dat")
         dtype = dtype_map.get(y_format.upper(), np.int16)
         data = np.fromfile(dat_path, dtype=dtype)
         

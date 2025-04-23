@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 class BaseReader(ABC):
-    @abstractmethod
-    def load(self):
+    @staticmethod
+    def load():
         pass
     
     @abstractmethod

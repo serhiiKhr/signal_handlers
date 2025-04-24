@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
 class BaseAnalyzer:
     @abstractmethod
-    def analyze(self, sirgnal, **kwargs):
+    def analyze(self, signal, **kwargs):
         pass

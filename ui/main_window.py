@@ -43,6 +43,11 @@ class MainWindow:
         self.channel_list = tk.Listbox(frm, height=8, selectmode=tk.MULTIPLE, width=50)
         self.channel_list.grid(column=0, row=row, columnspan=2, pady=5)
         row += 1
+        
+        self.crop_enabled = tk.BooleanVar(value=True)
+        chk_crop = ttk.Checkbutton(frm, text="Аналізувати фрагмент", variable=self.crop_enabled)
+        chk_crop.grid(column=1, row=row, sticky='w', padx=(0, 10))
+        row += 1
 
         ttk.Label(frm, text="Початок аналізу [с]:").grid(column=0, row=row, sticky='e', pady=5)
         self.start_time_entry = ttk.Entry(frm)
@@ -71,9 +76,9 @@ class MainWindow:
         row += 1
 
         ttk.Label(frm, text="Кількість ліній спектру:").grid(column=0, row=row, sticky='e', pady=5)
-        powers_of_two = [2**i for i in range(7, 14)]  # от 512 до 8192
+        powers_of_two = [2**i for i in range(7, 14)]  # 512...8192
         self.nperseg = ttk.Combobox(frm, values=powers_of_two, state="readonly")
-        self.nperseg.set(4096)  # Устанавливаем значение по умолчанию
+        self.nperseg.set(4096)
         self.nperseg.grid(column=1, row=row, sticky='w')
         row += 1
 
@@ -105,8 +110,11 @@ class MainWindow:
             messagebox.showwarning("Увага", "Виберіть хоча б один канал.")
             return
         
+        crop_enabled = self.crop_enabled.get()
         start_time = self.start_time_entry.get()
+        start_time = float(start_time) if start_time else start_time
         end_time = self.end_time_entry.get()
+        end_time = float(end_time) if end_time else end_time
         
         nperseg = int(self.nperseg.get())
         window = self.window.get()
@@ -114,13 +122,13 @@ class MainWindow:
         
         analys = self.analyzer_combo.get()
         if analys == getattr(STFT, 'label', __name__):
-            self.render_stft_graphs(channels=selected_channels, nperseg=nperseg, window=window)
+            self.render_stft_graphs(channels=selected_channels, nperseg=nperseg, window=window, crop_enabled=crop_enabled, start_time=start_time, end_time=end_time)
         else:
             print(f'Analys {analys} is not described')
         
         print(f"Аналізуємо: {selected_channels}, {start_time}-{end_time} c, {window}, {nperseg}")        
      
-    def render_stft_graphs(self, channels: list, nperseg: int=0, window: str = 'hann'):
+    def render_stft_graphs(self, channels: list, nperseg: int=0, window: str = 'hann', crop_enabled=False, start_time=None, end_time=None):
         stft = STFT(window=window, nperseg=nperseg)
         file_name = get_filename_without_extension(self.file_path)
         # filter = Filter(lowcut=5, highcut=2000)
@@ -128,6 +136,10 @@ class MainWindow:
         for channel in channels:
             sampling_rate = self.reader_instance.get_sampling_rate(channel)
             signal = self.reader_instance.read_channel(channel)
+            
+            if crop_enabled:
+                signal = self.reader_instance.slice_signal(signal, sampling_rate, start_time, end_time)
+            
             result = stft.analyze(signal=signal, sampling_rate=sampling_rate, min_freq=FREQ_FRAMES['MIN'], max_freq=FREQ_FRAMES['MAX'])
             frequencies, times, amplitudes = result
             frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result)

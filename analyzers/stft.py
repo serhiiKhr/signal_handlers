@@ -43,35 +43,34 @@ class STFT(BaseAnalyzer):
     def analyze(self, signal, **kwargs):
         sampling_rate = kwargs.get('sampling_rate')
         min_freq = kwargs.get('min_freq')
-        print('min_freq ==>', min_freq)
         max_freq = kwargs.get('max_freq')
-        print('max_freq ==>', max_freq)
+        
+        _nperseg = self.nperseg
+        if len(signal) < self.nperseg:
+            _nperseg = len(signal)
         
         if compare_window('HANNING', self.window):
-            window = hann(self.nperseg)
+            window = hann(_nperseg)
         elif compare_window('BLACKMANHARRIS', self.window):
-            window = blackmanharris(self.nperseg)
+            window = blackmanharris(_nperseg)
         else:
-            window = hann(self.nperseg)
+            window = hann(_nperseg)
                         
         noverlap = 0
         if self.overlap_percent is not None and isinstance(self.overlap_percent, (float, int)) and self.overlap_percent > 0:
-            noverlap = int((self.overlap_percent / 100) * self.nperseg)
+            noverlap = int((self.overlap_percent / 100) * _nperseg)
 
         frequencies, time, spectr = stft(
             signal,
             fs=sampling_rate,
             window=window,
-            nperseg=self.nperseg,
+            nperseg=_nperseg,
             noverlap=noverlap,
             boundary='zeros'
         )
-        window_correction = numpy.sum(window) / self.nperseg
+        window_correction = numpy.sum(window) / _nperseg
         corrected_spectr = spectr / window_correction
         corrected_spectr[0, :] = 0
-        
-        MIN_FREQ = None
-        MAX_FREQ = None
 
         return self.frame_signal((frequencies, time, numpy.abs(corrected_spectr)), min_freq=min_freq, max_freq=max_freq) 
     

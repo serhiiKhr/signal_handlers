@@ -27,8 +27,26 @@ class STFT(BaseAnalyzer):
         self.min_display_freq = min_display_freq
         pass
     
+    def frame_signal(self, signal, min_freq=None, max_freq=None):
+        if min_freq is None and max_freq is None:
+            return signal
+        
+        frequencies, time, spectr = signal
+                
+        freq_mask = (frequencies >= min_freq) & (frequencies <= max_freq)
+        filtered_frequencies = frequencies[freq_mask]
+        filtered_spectr = numpy.abs(spectr[freq_mask, :])
+        
+        return filtered_frequencies, time, filtered_spectr
     
-    def analyze(self, signal, sampling_rate):
+    
+    def analyze(self, signal, **kwargs):
+        sampling_rate = kwargs.get('sampling_rate')
+        min_freq = kwargs.get('min_freq')
+        print('min_freq ==>', min_freq)
+        max_freq = kwargs.get('max_freq')
+        print('max_freq ==>', max_freq)
+        
         if compare_window('HANNING', self.window):
             window = hann(self.nperseg)
         elif compare_window('BLACKMANHARRIS', self.window):
@@ -51,8 +69,11 @@ class STFT(BaseAnalyzer):
         window_correction = numpy.sum(window) / self.nperseg
         corrected_spectr = spectr / window_correction
         corrected_spectr[0, :] = 0
+        
+        MIN_FREQ = None
+        MAX_FREQ = None
 
-        return frequencies, time, numpy.abs(corrected_spectr)
+        return self.frame_signal((frequencies, time, numpy.abs(corrected_spectr)), min_freq=min_freq, max_freq=max_freq) 
     
     def find_peak_frequency_time(self, signal=None, min_frequency=100):
         if signal is None:

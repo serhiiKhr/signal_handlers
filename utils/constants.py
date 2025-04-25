@@ -1,4 +1,6 @@
 WINDOWS = {'HANNING': 'hanning', 'BLACKMANHARRIS': 'blackmanharris'}
+ANALYSIS = {'STFT': 'stft'}
+
 
 def get_windows():
     return WINDOWS

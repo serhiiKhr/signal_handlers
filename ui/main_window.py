@@ -1,22 +1,25 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
-from tkinter import filedialog
+from tkinter import messagebox, ttk
 import numpy as np
-import matplotlib.pyplot as plt
-import os
+
+from .plot_renderer import PlotRenderer
+
+from analyzers import STFT
+from utils.helpers import get_filename_without_extension
 
 class MainWindow:
     def __init__(self, readers: list, analyzers: list):
         
         self.readers = readers
         self.reader_instance = None
-        self.analyzers = analyzers
-        self.analyzer_instance = None
-                
+        self.analyzers = [getattr(a, "label", a.__name__) for a in analyzers]
+        self.file_path = None
+        
         self.root = tk.Tk()
         self.root.title("Аналіз .mera/.dat сигналів")
 
         self.build_ui()
+        
 
     def build_ui(self):
         frm = ttk.Frame(self.root, padding=10)
@@ -53,16 +56,11 @@ class MainWindow:
         row += 1
         
         ttk.Label(frm, text="Метод аналізу:").grid(column=0, row=row, sticky='e', pady=5)
-        self.analyzer_combo = ttk.Combobox(
-            frm,
-            values=[getattr(a, "label", a.__name__) for a in self.analyzers]
-        )
-        if len(self.analyzers) > 0:
+        self.analyzer_combo = ttk.Combobox(frm, values=self.analyzers)
+    
+        if self.analyzers:
             self.analyzer_combo.current(0)
-            self.analyzer_combo.grid(column=1, row=row, pady=5)
-            self.analyzer_combo.bind("<<ComboboxSelected>>", self.on_analyzer_selected)
-            self.analyzer_instance = self.analyzers[0]
-                        
+            self.analyzer_combo.grid(column=1, row=row, pady=5)      
         row += 1
 
         ttk.Label(frm, text="Вікно FFT:").grid(column=0, row=row, sticky='e', pady=5)
@@ -78,32 +76,14 @@ class MainWindow:
         self.nperseg.grid(column=1, row=row, sticky='w')
         row += 1
 
-        ttk.Label(frm, text="Одиниці сигналу:").grid(column=0, row=row, sticky='e', pady=5)
-        self.unit_combo = ttk.Combobox(frm, values=["Без змін", "g → m/s²", "m/s² → g"])
-        self.unit_combo.set("Без змін")
-        self.unit_combo.grid(column=1, row=row, sticky='w')
-        row += 1
-
-        ttk.Label(frm, text="Тип перетворення:").grid(column=0, row=row, sticky='e', pady=5)
-        self.transform_combo = ttk.Combobox(frm, values=["Прискорення", "Швидкість", "Переміщення"])
-        self.transform_combo.set("Прискорення")
-        self.transform_combo.grid(column=1, row=row, sticky='w')
-        row += 1
-
         ttk.Button(frm, text="Аналізувати сигнал", command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
         )
-       
-    def on_analyzer_selected(self, event):
-        selected_index = self.analyzer_combo.current()
-        self.analyzer_instance = self.analyzers[selected_index]
-        print(f"Вибрано метод: {self.analyzer_instance.__name__}")
         
     def load_file(self, reader):
-        
-        file_path = reader.load()
-        if file_path:
-            self.reader_instance = reader(filepath=file_path)
+        self.file_path = reader.load()
+        if self.file_path:
+            self.reader_instance = reader(filepath=self.file_path)
             channels = self.reader_instance.get_channels()
             self.update_channels(channels)
               
@@ -128,75 +108,48 @@ class MainWindow:
         end_time = self.end_time_entry.get()
         
         nperseg = int(self.nperseg.get())
-         
         window = self.window.get()
+    
         
-        units = self.unit_combo.get()
-        transform = self.transform_combo.get()
+        analys = self.analyzer_combo.get()
+        if analys == getattr(STFT, 'label', __name__):
+            self.render_stft_graphs(channels=selected_channels, nperseg=nperseg, window=window)
+        else:
+            print(f'Analys {analys} is not described')
         
-        self.analyzer_instance = self.analyzer_instance(
-            nperseg=nperseg, 
-            window=window, 
-        )
-        for selected_channel in selected_channels:
-            sampling_rate = self.reader_instance.get_sampling_rate(selected_channel)
-            self.analyze_channel(ch_name=selected_channel, sampling_rate=sampling_rate)
+        print(f"Аналізуємо: {selected_channels}, {start_time}-{end_time} c, {window}, {nperseg}")        
+     
+    def render_stft_graphs(self, channels: list, nperseg: int=0, window: str = 'hann'):
+        stft = STFT(window=window, nperseg=nperseg)
+        file_name = get_filename_without_extension(self.file_path)
+        plots = []
+        for channel in channels:
+            sampling_rate = self.reader_instance.get_sampling_rate(channel)
+            signal = self.reader_instance.read_channel(channel)
+            
+            result = stft.analyze(signal=signal, sampling_rate=sampling_rate)
+            frequencies, times, amplitudes = result
+            frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result, min_frequency=5)
 
-        print(f"Аналізуємо: {selected_channels}, {start_time}-{end_time} c, {window}, {nperseg}, {units}, {transform}")        
-        
-    def analyze_channel(self, ch_name: str = '', sampling_rate: float = 1.0):
-        signal = self.reader_instance.read_channel(ch_name)
-        result = self.analyzer_instance.analyze(signal=signal, sampling_rate=sampling_rate)
-        frequencies, times, amplitudes = result
-        frequency, time, max_amplitudes = self.analyzer_instance.find_peak_frequency_time(signal=result, min_frequency=5)
-        print('frequency ==>', frequency)
-        print('frequency ==>', time)
-        print('frequency ==>', max_amplitudes)
-        plt.figure(figsize=(10, 5))
-        plt.plot(frequencies, max_amplitudes, label=f'Spectrum at t = {time:.2f}s')
-        plt.xlabel('Frequency (Hz)')
-        plt.ylabel('Amplitude')
-        plt.title('Spectrum at Peak Amplitude')
-        plt.grid(True)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-        # if polyTX == 0:
-        #     signal = k1 * (signal - k0)
-        # else:
-        #     signal = k1 * signal + k0
-
-        # if convert_unit == "g → m/s²":
-        #     signal *= 9.80665
-        # elif convert_unit == "m/s² → g":
-        #     signal /= 9.80665
-
-        # if transform_type == "Швидкість":
-        #     signal = cumtrapz(signal, dx=1/freq)
-        # elif transform_type == "Переміщення":
-        #     signal = cumtrapz(cumtrapz(signal, dx=1/freq), dx=1/freq)
-
-        # time = np.linspace(t_start, t_end, len(signal), endpoint=False)
-        # window = get_window(win_type, len(signal))
-        # signal_win = (signal - np.mean(signal)) * window
-        # spectrum = 2 * np.abs(fft(signal_win, n=n_fft))[:n_fft//2] / len(signal_win)
-        # freqs = fftfreq(n_fft, d=1/freq)[:n_fft//2]
-
-        # fig, axs = plt.subplots(2, 1, figsize=(12, 8))
-        # axs[0].plot(time, signal)
-        # axs[0].set_title(f"Сигнал: {name} ({t_start:.3f}–{t_end:.3f} с)")
-        # axs[0].set_xlabel("Час [с]")
-        # axs[0].set_ylabel("Амплітуда")
-        # axs[0].grid(True)
-
-        # axs[1].plot(freqs, spectrum)
-        # axs[1].set_title(f"АЧХ (FFT, {win_type}, {n_fft} ліній)")
-        # axs[1].set_xlabel("Частота [Гц]")
-        # axs[1].set_ylabel("Амплітуда")
-        # axs[1].grid(True)
-
-        # plt.tight_layout()
-        # plt.show()
+            renderer = PlotRenderer(xdata=frequencies, ydata=max_amplitudes)
+            max_idx = np.argmax(max_amplitudes)
+            max_x = frequencies[max_idx]
+            max_y = max_amplitudes[max_idx]
+            minutes = time // 60
+            seconds = time % 60
+            
+            renderer.set_peaks([{'x': max_x, 'y': max_y}])
+            
+            renderer.set_title(f"{file_name} ({channel})")
+            y_units = self.reader_instance.get_y_units(channel=channel)
+            renderer.set_ylabel(f'Амплитуда {"(" + y_units + ')' if y_units else ""}')
+            renderer.set_xlabel('Частота (Гц)')
+            renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} Гц).\nНа {int(minutes)} мин {int(seconds):02d} сек")
+            renderer.set_ylim((0, max_y * 1.3))
+            
+            plots.append(renderer)
+            # renderer.show()
+        PlotRenderer.show_multiply(plots=plots)
 
 
     def run(self):

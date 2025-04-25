@@ -35,6 +35,13 @@ class MeraReader(BaseReader):
         meta = self.get_file_meta()
         
         return [name for name in meta.keys() if name.lower() != 'mera']
+    
+    def get_y_units(self, channel: str = '') -> str:
+        if not channel:
+            return ''
+        
+        meta = self.get_file_meta()
+        return deep_get(meta, [channel, 'yunits'], '')
 
     
     def read_channel(self, channel):

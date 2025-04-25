@@ -2,12 +2,13 @@ import numpy
 from scipy.signal.windows import hann, blackmanharris
 from scipy.signal import stft
 
-from utils import compare_window
+from utils import compare_window, ANALYSIS
 
 from .base import BaseAnalyzer
 
 class STFT(BaseAnalyzer):
-    label = "STFT анализ"
+    id: str = ANALYSIS['STFT']
+    label: str = "STFT анализ"
     def __init__(self,
                  nperseg: int = 1,
                  window: str = 'hann',
@@ -49,6 +50,7 @@ class STFT(BaseAnalyzer):
         )
         window_correction = numpy.sum(window) / self.nperseg
         corrected_spectr = spectr / window_correction
+        corrected_spectr[0, :] = 0
 
         return frequencies, time, numpy.abs(corrected_spectr)
     
@@ -66,7 +68,7 @@ class STFT(BaseAnalyzer):
         """
         amplitudes = numpy.abs(spectres)  # берём амплитуды
         max_amplitudes_per_time = amplitudes.max(axis=0)  # максимум по частотам для каждого времени
-        time_idx = numpy.argmax(max_amplitudes_per_time)     # индекс времени с максимальной амплитудой
+        time_idx = numpy.argmax(max_amplitudes_per_time)  # индекс времени с максимальной амплитудой
 
         spectrum = amplitudes[:, time_idx]                # спектр (амплитуды) для этого времени
         time = times[time_idx]                            # соответствующее время

@@ -4,8 +4,9 @@ import numpy as np
 
 from .plot_renderer import PlotRenderer
 
-from analyzers import STFT
+from analyzers import STFT, Filter
 from utils.helpers import get_filename_without_extension
+from utils.constants import FREQ_FRAMES
 
 class MainWindow:
     def __init__(self, readers: list, analyzers: list):
@@ -122,14 +123,14 @@ class MainWindow:
     def render_stft_graphs(self, channels: list, nperseg: int=0, window: str = 'hann'):
         stft = STFT(window=window, nperseg=nperseg)
         file_name = get_filename_without_extension(self.file_path)
+        # filter = Filter(lowcut=5, highcut=2000)
         plots = []
         for channel in channels:
             sampling_rate = self.reader_instance.get_sampling_rate(channel)
             signal = self.reader_instance.read_channel(channel)
-            
-            result = stft.analyze(signal=signal, sampling_rate=sampling_rate)
+            result = stft.analyze(signal=signal, sampling_rate=sampling_rate, min_freq=FREQ_FRAMES['MIN'], max_freq=FREQ_FRAMES['MAX'])
             frequencies, times, amplitudes = result
-            frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result, min_frequency=5)
+            frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result)
 
             renderer = PlotRenderer(xdata=frequencies, ydata=max_amplitudes)
             max_idx = np.argmax(max_amplitudes)
@@ -145,6 +146,7 @@ class MainWindow:
             renderer.set_ylabel(f'Амплитуда {"(" + y_units + ')' if y_units else ""}')
             renderer.set_xlabel('Частота (Гц)')
             renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} Гц).\nНа {int(minutes)} мин {int(seconds):02d} сек")
+            renderer.set_xlim((FREQ_FRAMES['MIN'], FREQ_FRAMES['MAX']))
             renderer.set_ylim((0, max_y * 1.3))
             
             plots.append(renderer)

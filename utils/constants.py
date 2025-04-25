@@ -1,5 +1,6 @@
 WINDOWS = {'HANNING': 'hanning', 'BLACKMANHARRIS': 'blackmanharris'}
 ANALYSIS = {'STFT': 'stft'}
+FREQ_FRAMES = {'MIN': 5, 'MAX': 2000}
 
 
 def get_windows():

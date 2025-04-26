@@ -7,6 +7,7 @@ from .plot_renderer import PlotRenderer
 from analyzers import STFT, Filter
 from utils.helpers import get_filename_without_extension
 from utils.constants import FREQ_FRAMES
+from utils.csv_creator import save_data_to_csv
 
 class MainWindow:
     def __init__(self, readers: list, analyzers: list):
@@ -133,6 +134,9 @@ class MainWindow:
         file_name = get_filename_without_extension(self.file_path)
         # filter = Filter(lowcut=5, highcut=2000)
         plots = []
+        data_row = {
+            'filename': file_name
+        }
         for channel in channels:
             sampling_rate = self.reader_instance.get_sampling_rate(channel)
             signal = self.reader_instance.read_channel(channel)
@@ -160,9 +164,12 @@ class MainWindow:
             renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} Гц).\nНа {int(minutes)} мин {int(seconds):02d} сек")
             renderer.set_xlim((FREQ_FRAMES['MIN'], FREQ_FRAMES['MAX']))
             renderer.set_ylim((0, max_y * 1.3))
+            data_row[channel] = f"{max_y:.2f} {y_units if y_units else ''}, {max_x:.2f} Гц"
             
             plots.append(renderer)
             # renderer.show()
+            
+        save_data_to_csv('D:/MERA/6-я от 11.05.23/Замер3/test-auto-2.csv', [data_row])
         PlotRenderer.show_multiply(plots=plots)
 
 

@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 import numpy as np
+import json
 
 from .plot_renderer import PlotRenderer
 
@@ -22,11 +23,30 @@ class MainWindow:
 
         self.build_ui()
         
+    def open_json_script(self):
+        file_path = filedialog.askopenfilename(
+            title="Виберіть JSON файл",
+            filetypes=[("JSON Files", "*.json")]
+        )
+        if file_path:
+            try:
+                with open(file_path, "r") as f:
+                    data = json.load(f)
+                print(f"Данные из JSON: {data}")
+            except Exception as e:
+                print(f"Ошибка при чтении файла: {e}")
+        
 
     def build_ui(self):
         frm = ttk.Frame(self.root, padding=10)
         frm.grid()
-
+        
+        row = 0
+        ttk.Button(frm, text="Виконати", command=self.open_json_script).grid(
+            column=1, row=row, sticky='e', pady=10
+        )
+        row += 1
+       
         # Кнопки выбора файлов
         for idx, reader in enumerate(self.readers):
             label = getattr(reader, "label", reader.__name__)
@@ -34,9 +54,9 @@ class MainWindow:
                 frm,
                 text=f"Відкрити {label}",
                 command=lambda cls=reader: self.load_file(cls)
-            ).grid(column=0, row=idx, columnspan=2, sticky='w', pady=5)
+            ).grid(column=0, row=idx + row, columnspan=2, sticky='w', pady=5)
 
-        row = len(self.readers)
+        row += len(self.readers)
 
         # Надпись и список каналов (как раньше — над списком)
         ttk.Label(frm, text="Виберіть канали:").grid(column=0, row=row, columnspan=2, sticky='w', pady=5)

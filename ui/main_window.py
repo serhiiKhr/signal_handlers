@@ -9,6 +9,7 @@ from analyzers import STFT, Filter
 from utils.helpers import get_filename_without_extension
 from utils.constants import FREQ_FRAMES
 from utils.csv_creator import save_data_to_csv
+from utils.execute_json import JSONExecutor
 
 class MainWindow:
     def __init__(self, readers: list, analyzers: list):
@@ -30,9 +31,13 @@ class MainWindow:
         )
         if file_path:
             try:
-                with open(file_path, "r") as f:
-                    data = json.load(f)
-                print(f"Данные из JSON: {data}")
+                with open(file_path, "r", encoding="utf-8") as f:
+                    execute_settings = json.load(f)
+                    
+                    executor = JSONExecutor(settings=execute_settings)
+                    executor.run()
+                    
+                print(f"Данные из JSON: {execute_settings}")
             except Exception as e:
                 print(f"Ошибка при чтении файла: {e}")
         

@@ -79,6 +79,26 @@ class PlotRenderer:
         window.geometry(f"+{x}+{y}")
         
     @classmethod
+    def save_multiply(cls, plots: list, path: str, dpi: int = 300):
+        if not plots:
+            return
+
+        n = len(plots)
+        # Увеличиваем размер фигуры по числу графиков
+        fig_height = 3 * n  # по 3 дюйма на график
+        fig, axes = plt.subplots(n, 1, figsize=(8.27, fig_height), dpi=dpi, constrained_layout=True)
+
+        if n == 1:
+            axes = [axes]
+
+        for plot, ax in zip(plots, axes):
+            plot._create_figure(ax)
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fig.savefig(path, dpi=dpi)
+        plt.close(fig)
+        
+    @classmethod
     def show_multiply(cls, plots: list):
         if not plots:
             return
@@ -105,6 +125,8 @@ class PlotRenderer:
         x = 100 + len(window.master.winfo_children()) * 40
         y = 100 + len(window.master.winfo_children()) * 30
         window.geometry(f"+{x}+{y}")
+   
+        
 
     def save(self, path: str, dpi: int = 300):
         fig, ax = plt.subplots(dpi=dpi)

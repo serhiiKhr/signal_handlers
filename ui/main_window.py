@@ -36,8 +36,7 @@ class MainWindow:
                     
                     executor = JSONExecutor(settings=execute_settings)
                     executor.run()
-                    
-                print(f"Данные из JSON: {execute_settings}")
+                
             except Exception as e:
                 print(f"Ошибка при чтении файла: {e}")
         

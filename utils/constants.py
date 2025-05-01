@@ -1,6 +1,7 @@
 WINDOWS = {'HANNING': 'hanning', 'BLACKMANHARRIS': 'blackmanharris'}
 ANALYSIS = {'STFT': 'stft'}
 FREQ_FRAMES = {'MIN': 5, 'MAX': 2000}
+DEFAULT_IMG_EXTENSION = '.png'
 
 
 class SourceProgramm:

@@ -12,16 +12,19 @@ from analyzers import STFT
 from ui.plot_renderer import PlotRenderer
 
 # constants
-from .constants import MERA, FREQ_FRAMES, WINDOWS
+from .constants import MERA, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EXTENSION
 
 # utils
-from utils.helpers import get_filename_without_extension
+from utils.helpers import get_filename_without_extension, group_by, find_index, deep_get, get_file_path, ensure_path_from_parts
 
 settings = {
     "output_path": '',
     "source_program": '',
     "channels": ['Zпп', 'Xпп', 'Yпп'],
-    "channel_groups": [['Zпп', 'Xпп']],
+    "groups_settings": {
+        "groups": [["Yпп", "Zпп", "Xпп"], ["Yзп", "Zзп"]],
+        "single_image_group": False
+    },
     "method": {
         "name": 'stft',
         "nperseg": 1,
@@ -101,30 +104,25 @@ class JSONExecutor:
         return reader.slice_signal(data=signal, sampling_rate=sampling_rate, start_time=start_time, end_time=end_time)
         
     def read_and_cache(self, file_path: str, channel: str, source_program: str):
-        try:
-            key = CachedData.get_key(file_path=file_path, channel=channel)
-            if key not in self.cached_data:
-                if source_program == MERA.id:
-                    data, sampling_rate = self.read_mera_file(file_path=file_path, channel=channel)
-                else:
-                    self.log_error(message=f"Неизвестная программа источника: {source_program}")
-                    return None
-                
-                self.cached_data[key] = CachedData(
-                    file_path=file_path, 
-                    channel=channel, 
-                    source_program=source_program,
-                    data=data,
-                    sampling_rate=sampling_rate
-                )
-                print('self.cached_data[key]', self.cached_data[key])
+        key = CachedData.get_key(file_path=file_path, channel=channel)
+        if key not in self.cached_data:
+            if source_program == MERA.id:
+                data, sampling_rate = self.read_mera_file(file_path=file_path, channel=channel)
             else:
-                self.log_info(message=f"Файл {file_path}, канал {channel} взят из кеша")
-                
-            return self.cached_data[key]
-        except Exception as e:
-            print('e ==>', e)
-            traceback.format_exc()
+                self.log_error(message=f"Неизвестная программа источника: {source_program}")
+                return None
+            
+            self.cached_data[key] = CachedData(
+                file_path=file_path, 
+                channel=channel, 
+                source_program=source_program,
+                data=data,
+                sampling_rate=sampling_rate
+            )
+        else:
+            self.log_info(message=f"Файл {file_path}, канал {channel} взят из кеша")
+            
+        return self.cached_data[key]
 
     def run(self):
         errors = self.validate_settings(self.settings)
@@ -143,10 +141,7 @@ class JSONExecutor:
                 time_frames = settings["time_frames"]
                 channels = settings["channels"]
                 method = settings["method"]
-                source_program = settings["source_program"]
-                
-                output_path = settings["output_path"]
-                channel_groups = settings["channel_groups"]        
+                source_program = settings["source_program"]     
                 
                 if not source_program:
                     self.log_error(message=f"source_program обязательны. Ошибка в файле: {file_settings}")
@@ -157,32 +152,27 @@ class JSONExecutor:
                     self.log_error(message=f"file_path обязательны. Ошибка в файле: {file_settings}")
                     raise  ValueError("file_path обязательны")
                 
-                try:
-                    if len(time_frames) > 0:
-                        for tf in time_frames:
-                            self.process_file(
-                                source_program=source_program,
-                                id=id,
-                                file_path=file_path,
-                                channels=channels,
-                                time_frame=tf,
-                                method=method
-                            )
-                    else:
+                if len(time_frames) > 0:
+                    for tf in time_frames:
                         self.process_file(
                             source_program=source_program,
                             id=id,
                             file_path=file_path,
                             channels=channels,
+                            time_frame=tf,
                             method=method
                         )
-                except Exception as e:
-                    print('e -->', e)
-                    traceback.format_exc()
+                else:
+                    self.process_file(
+                        source_program=source_program,
+                        id=id,
+                        file_path=file_path,
+                        channels=channels,
+                        method=method
+                    )
                     
-        
-            result =  self.get_results()
-            print('result ==>', result)         
+            results =  self.get_results()
+            self.render_graphs(results=results, settings=self.settings)       
         except Exception as e:
             self.show_errors()  
 
@@ -225,7 +215,7 @@ class JSONExecutor:
                         'renderer': renderer,
                         'summary': summary,
                         'channel': channel,
-                        'file_id': id,
+                        'id': id,
                         'tf_id': time_frame['id']
                     }
                 else:
@@ -235,10 +225,10 @@ class JSONExecutor:
                         'renderer': renderer,
                         'summary': summary,
                         'channel': channel,
-                        'file_id': id
+                        'id': id
                     }
-        else:
-            self.log_error(message=f"Метод обработки {method_name} не реализован.")
+            else:
+                self.log_error(message=f"Метод обработки {method_name} не реализован.")
         
     def get_results(self):
         return self.processed_files
@@ -275,9 +265,52 @@ class JSONExecutor:
         return renderer, summary
         
     def render_graphs(self, results, settings):
-        # цикл по настройкам
-        # рендер результатов
-        return ''
+        groupped = {}
+        for method_name in results.keys():
+            groupped[method_name] = group_by(results[method_name], 'id')
+        
+        for method_name in groupped:
+            for id in groupped[method_name]:
+                file_settings = self.get_settings_by_id(settings=settings, target_id=id)
+                channel_groups = deep_get(file_settings, ['groups_settings', 'groups'], [])
+                
+                file_settings = self.get_settings_by_id(settings=settings, target_id=id)
+                file_name = get_filename_without_extension(file_settings['file_path'])
+                path_arr = [file_settings['output_path'], method_name, file_name]
+                time_frames_name = deep_get(file_settings, ['time_frames', 0, 'name'], '')
+                
+                if time_frames_name:
+                    path_arr.append(time_frames_name)
+                    
+                if len(channel_groups) > 0:
+                    for channel_group in channel_groups:
+                        grouped_channels = []
+                        for i, ch in enumerate(channel_group):
+                            ch_result_index = find_index(groupped[method_name][id], lambda v: v['channel'] == ch)
+                            if ch_result_index >= 0:
+                                grouped_channels.append(groupped[method_name][id][ch_result_index]['renderer'])
+                            else:
+                                self.log_error(f"Нет канала {ch} в списке результатов вычисления")
+                                                        
+                        valid_path = ensure_path_from_parts(path_arr)
+                        group_file_name = "_".join(channel_group)
+                        PlotRenderer.save_multiply(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+                        
+                else:
+                    "save by one file"
+                    for result in groupped[method_name][id]:
+                        
+                        renderer = result['renderer']
+                        channel = result['channel']
+                        
+                        if 'tf_id' in result:
+                            timeframe_settings = self.get_timeframe_settings_by_id(settings=settings, target_id=result['tf_id'])
+                            path_arr.append(timeframe_settings['name'])
+                            
+                        valid_path = ensure_path_from_parts(path_arr)
+                        renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}")
+            
+
         
     def validate_settings(self, settings):
         errors = []
@@ -296,6 +329,23 @@ class JSONExecutor:
         if not isinstance(files, list):
             log("'files' должен быть списком.")
             return errors
+
+        # Проверка на 'groups_settings'
+        groups_settings = settings.get('groups_settings', {})
+        if 'groups' in groups_settings:
+            groups = groups_settings['groups']
+            if not isinstance(groups, list):
+                log("'groups' должен быть списком.")
+            else:
+                for i, group in enumerate(groups):
+                    if not isinstance(group, list):
+                        log(f"'groups[{i}]' должно быть списком.")
+                    else:
+                        for ch in group:
+                            if not isinstance(ch, str):
+                                log(f"В 'groups[{i}]' все элементы должны быть строками (каналами).")
+        if 'single_image_group' in groups_settings and not isinstance(groups_settings['single_image_group'], bool):
+            log("'single_image_group' должен быть булевым значением.")
 
         for i, file in enumerate(files):
             file_path = file.get('file_path')
@@ -333,7 +383,7 @@ class JSONExecutor:
         global_settings = {
             "output_path": settings.get("output_path"),
             "channels": settings.get("channels"),
-            "channel_groups": settings.get("channel_groups"),
+            "groups_settings": settings.get("groups_settings"),
             "method": settings.get("method"),
             "source_program": settings.get("source_program")
         }        
@@ -344,18 +394,30 @@ class JSONExecutor:
             time_frames = file_settings.get("time_frames", [])
             # Проверка ID самого файла
             if file_id == target_id:
+                output_path = file_settings.get("output_path", global_settings["output_path"])
+                if not output_path:
+                    output_path = get_file_path(file_settings.get("file_path"))
                 return {
                     "file_path": file_path,
                     "time_frames": time_frames,
-                    "output_path": file_settings.get("output_path", global_settings["output_path"]),
+                    "output_path": output_path,
                     "channels": file_settings.get("channels", global_settings["channels"]),
-                    "channel_groups": file_settings.get("channel_groups", global_settings["channel_groups"]),
+                    "groups_settings": file_settings.get("groups_settings", global_settings["groups_settings"]),
                     "method": file_settings.get("method", global_settings["method"]),
                     "source_program": file_settings.get("source_program", global_settings["source_program"]),
                 }
 
         self.log_error(f"ID '{target_id}' не найден в файлах или time_frames")
-        return None     
+        return None
+    
+    def get_timeframe_settings_by_id(self, settings: dict, target_id: str):
+        for file in settings.get("files", []):
+            for frame in file.get("time_frames", []):
+                if frame.get("id") == target_id:
+                    file_settings = self.get_settings_by_id(settings=settings, target_id=file['id'])
+                    
+                    return {**file_settings, **frame}
+        return None
         
     def assign_ids(self, settings: dict) -> None:
         for file_settings in settings.get("files", []):

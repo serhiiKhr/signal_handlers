@@ -18,7 +18,7 @@ class PlotRenderer:
         self.ydata = ydata if ydata is not None else []
         self.xlim = xlim
         self.ylim = ylim
-        self.peaks = ydata if ydata is not None else []
+        self.peaks = peaks if peaks is not None else []
 
     def set_title(self, title=""): self.title = title
     def set_xlabel(self, xlabel=""): self.xlabel = xlabel
@@ -126,7 +126,75 @@ class PlotRenderer:
         y = 100 + len(window.master.winfo_children()) * 30
         window.geometry(f"+{x}+{y}")
    
-        
+    @classmethod
+    def save_multiple_on_single_plot(cls, plots: list, path: str, dpi: int = 300):
+        if not plots:
+            return
+
+        fig, ax = plt.subplots(figsize=(8.27, 6), dpi=dpi)
+        peaks = []
+  
+        for plot in plots:
+            title = plot.title or "Без названия"
+            if plot.description:
+                label = f"{title}\n{plot.description}"
+            else:
+                label = title
+                
+            ax.plot(plot.xdata, plot.ydata, label=label, linewidth=1)
+            for peak in plot.peaks:
+                peaks.append(peak) 
+                
+            # # Описание
+            # if plot.description:
+            #     descriptions.append(f"{label}:\n{plot.description}")
+            # else:
+            #     descriptions.append(f"{label}")
+                
+        # if descriptions:
+        #     full_description = "\n\n".join(descriptions)
+        #     ax.text(0.01, 0.99, full_description, transform=ax.transAxes,
+        #             fontsize=8, verticalalignment='top', horizontalalignment='left',
+        #             bbox=dict(facecolor='white', alpha=0.6), clip_on=True)
+
+        # Собираем лимиты
+        xmins = [plot.xlim[0] for plot in plots if plot.xlim]
+        xmaxs = [plot.xlim[1] for plot in plots if plot.xlim]
+        ymins = [plot.ylim[0] for plot in plots if plot.ylim]
+        ymaxs = [plot.ylim[1] for plot in plots if plot.ylim]
+    
+        # Устанавливаем лимиты, если есть хоть один
+        if xmins and xmaxs:
+            ax.set_xlim(min(xmins), max(xmaxs))
+        if ymins and ymaxs:
+            ax.set_ylim(min(ymins), max(ymaxs))
+            
+        for peak in peaks:
+            ax.scatter(peak['x'], peak['y'], color='red', zorder=5,
+                       marker='o', facecolors='none', edgecolors='red', s=50)
+ 
+        ax.set_title("Сводный график")
+        ax.set_xlabel("Время")
+        ax.set_ylabel("Амплитуда")
+        ax.grid(True)
+
+        if len(plots) > 1:
+            ax.legend()
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fig.tight_layout(pad=1.0)
+        fig.savefig(path, dpi=dpi)
+        plt.close(fig)
+
+        # Добавляем легенду, если есть несколько графиков
+        if len(plots) > 1:
+            ax.legend()
+
+        # Сохраняем изображение
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fig.tight_layout(pad=1.0)
+        fig.savefig(path, dpi=dpi)
+        plt.close(fig)    
 
     def save(self, path: str, dpi: int = 300):
         fig, ax = plt.subplots(dpi=dpi)

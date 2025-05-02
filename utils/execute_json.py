@@ -273,6 +273,7 @@ class JSONExecutor:
             for id in groupped[method_name]:
                 file_settings = self.get_settings_by_id(settings=settings, target_id=id)
                 channel_groups = deep_get(file_settings, ['groups_settings', 'groups'], [])
+                single_image_group = deep_get(file_settings, ['groups_settings', 'single_image_group'], False)
                 
                 file_settings = self.get_settings_by_id(settings=settings, target_id=id)
                 file_name = get_filename_without_extension(file_settings['file_path'])
@@ -294,8 +295,13 @@ class JSONExecutor:
                                                         
                         valid_path = ensure_path_from_parts(path_arr)
                         group_file_name = "_".join(channel_group)
-                        PlotRenderer.save_multiply(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
                         
+                        
+                        if single_image_group:
+                            PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+                        else:
+                            PlotRenderer.save_multiply(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+
                 else:
                     "save by one file"
                     for result in groupped[method_name][id]:

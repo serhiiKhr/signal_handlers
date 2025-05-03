@@ -17,38 +17,6 @@ from .constants import MERA, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EXTENSION
 # utils
 from utils.helpers import get_filename_without_extension, group_by, find_index, deep_get, get_file_path, ensure_path_from_parts
 
-settings = {
-    "output_path": '',
-    "source_program": '',
-    "channels": ['Zпп', 'Xпп', 'Yпп'],
-    "groups_settings": {
-        "groups": [["Yпп", "Zпп", "Xпп"], ["Yзп", "Zзп"]],
-        "single_image_group": False
-    },
-    "method": {
-        "name": 'stft',
-        "nperseg": 1,
-        "window": 'hann',
-        "min_freq": 5,
-        "max_freq": 2000,
-        "overlap_percent": 50
-    },
-    "files": [
-        {
-            "file_path": 'D://Mera//test',
-            "time_frames": [
-                { "name": "0.3", "start_time": 0, "end_time": 100 }
-            ]
-        },
-        {
-            "file_path": 'D://Mera//test',
-            "time_frames": [
-                { "name": "0.3", "start_time": 0, "end_time": 100 }
-            ]
-        }
-    ]
-}
-
 class CachedData:
     @staticmethod
     def get_key(file_path: str, channel: str):
@@ -204,13 +172,14 @@ class JSONExecutor:
                 window = method.get('window', WINDOWS['HANNING'])
                 min_freq = method.get('min_freq', FREQ_FRAMES['MIN'])
                 max_freq = method.get('max_freq', FREQ_FRAMES['MAX'])
+                min_display_freq = method.get('min_display_freq', None)
                 
                 stft = STFT(window=window, nperseg=nperseg)
                 if time_frame:
                     sliced_data = self.slice_signal(signal=data, sampling_rate=sampling_rate, start_time=time_frame['start_time'], end_time=time_frame['end_time']) 
                     result = stft.analyze(signal=sliced_data, sampling_rate=sampling_rate, min_freq=min_freq, max_freq=max_freq)
                     framed_key = f"{key}___{time_frame['id']}"
-                    renderer, summary = self.stft_results_handle(stft=stft, file_path=file_path, channel=channel, time_frame=time_frame, freq_frame=(min_freq, max_freq), result=result)
+                    renderer, summary = self.stft_results_handle(stft=stft, file_path=file_path, channel=channel, time_frame=time_frame, freq_frame=(min_freq, max_freq), result=result, min_display_freq=min_display_freq)
                     self.processed_files[method_name][framed_key] = {
                         'renderer': renderer,
                         'summary': summary,
@@ -233,9 +202,9 @@ class JSONExecutor:
     def get_results(self):
         return self.processed_files
         
-    def stft_results_handle(self, stft, file_path: str, channel: str, time_frame, freq_frame, result):
+    def stft_results_handle(self, stft, file_path: str, channel: str, time_frame, freq_frame, result, min_display_freq):
         frequencies, times, amplitudes = result
-        frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result)
+        frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result, min_frequency=min_display_freq)
         reader = MeraReader(filepath=file_path)
         
         file_name = get_filename_without_extension(file_path)
@@ -314,9 +283,7 @@ class JSONExecutor:
                             path_arr.append(timeframe_settings['name'])
                             
                         valid_path = ensure_path_from_parts(path_arr)
-                        renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}")
-            
-
+                        renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}")        
         
     def validate_settings(self, settings):
         errors = []

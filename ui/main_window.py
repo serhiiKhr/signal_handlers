@@ -11,6 +11,8 @@ from utils.constants import FREQ_FRAMES
 from utils.csv_creator import save_data_to_csv
 from utils.execute_json import JSONExecutor
 
+from .modals import STFTSettings
+
 class MainWindow:
     def __init__(self, readers: list, analyzers: list):
         
@@ -94,22 +96,24 @@ class MainWindow:
             self.analyzer_combo.grid(column=1, row=row, pady=5)      
         row += 1
 
-        ttk.Label(frm, text="Вікно FFT:").grid(column=0, row=row, sticky='e', pady=5)
-        self.window = ttk.Combobox(frm, values=["hann", "hamming", "blackman", "boxcar"])
-        self.window.set("hann")
-        self.window.grid(column=1, row=row, sticky='w')
-        row += 1
-
-        ttk.Label(frm, text="Кількість ліній спектру:").grid(column=0, row=row, sticky='e', pady=5)
-        powers_of_two = [2**i for i in range(7, 14)]  # 512...8192
-        self.nperseg = ttk.Combobox(frm, values=powers_of_two, state="readonly")
-        self.nperseg.set(4096)
-        self.nperseg.grid(column=1, row=row, sticky='w')
+        ttk.Button(frm, text="Налаштування", command=self.open_settings_dialog).grid(
+            column=1, row=row, sticky='e', pady=10
+        )
         row += 1
 
         ttk.Button(frm, text="Аналізувати сигнал", command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
         )
+        
+    def open_settings_dialog(self):
+        analys = self.analyzer_combo.get()
+        if analys == getattr(STFT, 'label', __name__):
+            dialog = STFTSettings()
+            dialog.open(self.root)
+            settings = dialog.get_settings()
+        else:
+            raise ValueError(f"Невідомий метод: {analys}")
+            
         
     def load_file(self, reader):
         self.file_path = reader.load()

@@ -11,6 +11,8 @@ from utils.constants import FREQ_FRAMES
 from utils.csv_creator import save_data_to_csv
 from utils.execute_json import JSONExecutor
 
+from .modals import STFTSettings
+
 class MainWindow:
     def __init__(self, readers: list, analyzers: list):
         
@@ -19,8 +21,12 @@ class MainWindow:
         self.analyzers = [getattr(a, "label", a.__name__) for a in analyzers]
         self.file_path = None
         
+        
+        
         self.root = tk.Tk()
         self.root.title("Аналіз .mera/.dat сигналів")
+        
+        self.method_settings = None
 
         self.build_ui()
         
@@ -93,23 +99,45 @@ class MainWindow:
             self.analyzer_combo.current(0)
             self.analyzer_combo.grid(column=1, row=row, pady=5)      
         row += 1
+        self.get_default_settings(analys=self.analyzer_combo.get())
+        
 
-        ttk.Label(frm, text="Вікно FFT:").grid(column=0, row=row, sticky='e', pady=5)
-        self.window = ttk.Combobox(frm, values=["hann", "hamming", "blackman", "boxcar"])
-        self.window.set("hann")
-        self.window.grid(column=1, row=row, sticky='w')
-        row += 1
-
-        ttk.Label(frm, text="Кількість ліній спектру:").grid(column=0, row=row, sticky='e', pady=5)
-        powers_of_two = [2**i for i in range(7, 14)]  # 512...8192
-        self.nperseg = ttk.Combobox(frm, values=powers_of_two, state="readonly")
-        self.nperseg.set(4096)
-        self.nperseg.grid(column=1, row=row, sticky='w')
+        ttk.Button(frm, text="Налаштування", command=self.open_settings_dialog).grid(
+            column=1, row=row, sticky='e', pady=10
+        )
         row += 1
 
         ttk.Button(frm, text="Аналізувати сигнал", command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
         )
+        
+    def open_settings_dialog(self):
+        analys = self.analyzer_combo.get()
+        if analys == getattr(STFT, 'label', __name__):
+            
+            dialog = STFTSettings(data=self.method_settings)
+            dialog.open(self.root)
+            settings = dialog.get_settings()
+            if settings:
+                self.method_settings = {
+                    **settings,
+                    'name': 'stft'
+                }
+        else:
+            raise ValueError(f"Невідомий метод: {analys}")
+    
+    def get_default_settings(self, analys):
+        if analys == getattr(STFT, 'label', __name__):
+            dialog = STFTSettings()
+            settings = dialog.get_settings()
+            self.method_settings = {
+                **settings,
+                'name': 'stft'
+            }
+            print('self.method_settings ==>', self.method_settings)
+        else:
+            raise ValueError(f"Невідомий метод: {analys}")
+            
         
     def load_file(self, reader):
         self.file_path = reader.load()
@@ -141,20 +169,44 @@ class MainWindow:
         end_time = self.end_time_entry.get()
         end_time = float(end_time) if end_time else end_time
         
-        nperseg = int(self.nperseg.get())
-        window = self.window.get()
-    
+        min_freq = (self.method_settings or {}).get('min_freq', FREQ_FRAMES['MIN'])
+        max_freq = (self.method_settings or {}).get('min_freq', FREQ_FRAMES['MAX'])
+        
+       
         
         analys = self.analyzer_combo.get()
         if analys == getattr(STFT, 'label', __name__):
-            self.render_stft_graphs(channels=selected_channels, nperseg=nperseg, window=window, crop_enabled=crop_enabled, start_time=start_time, end_time=end_time)
+            self.render_stft_graphs(
+                channels=selected_channels, 
+                crop_enabled=crop_enabled, 
+                start_time=start_time, 
+                end_time=end_time, 
+                method_settings=self.method_settings
+            )
         else:
             print(f'Analys {analys} is not described')
         
-        print(f"Аналізуємо: {selected_channels}, {start_time}-{end_time} c, {window}, {nperseg}")        
      
-    def render_stft_graphs(self, channels: list, nperseg: int=0, window: str = 'hann', crop_enabled=False, start_time=None, end_time=None):
-        stft = STFT(window=window, nperseg=nperseg)
+    def render_stft_graphs(
+        self, 
+        channels: list, 
+        crop_enabled=False, 
+        start_time=None, 
+        end_time=None,
+        method_settings=None
+    ):
+        if method_settings is None:
+            print(f'Something went wrong. Could not find method_settings ({self.method_settings})')
+            
+        window = (self.method_settings or {}).get('window')
+        nperseg = (self.method_settings or {}).get('nperseg')
+        
+        min_freq = (self.method_settings or {}).get('min_freq')
+        max_freq = (self.method_settings or {}).get('max_freq')
+        overlap_percent = (self.method_settings or {}).get('overlap_percent')
+        min_display_freq = (self.method_settings or {}).get('min_display_freq')
+    
+        stft = STFT(window=window, nperseg=nperseg, min_freq=min_freq, max_freq=max_freq, overlap_percent=overlap_percent, min_display_freq=min_display_freq)
         file_name = get_filename_without_extension(self.file_path)
         # filter = Filter(lowcut=5, highcut=2000)
         plots = []
@@ -168,9 +220,9 @@ class MainWindow:
             if crop_enabled:
                 signal = self.reader_instance.slice_signal(signal, sampling_rate, start_time, end_time)
             
-            result = stft.analyze(signal=signal, sampling_rate=sampling_rate, min_freq=FREQ_FRAMES['MIN'], max_freq=FREQ_FRAMES['MAX'])
+            result = stft.analyze(signal=signal, sampling_rate=sampling_rate, min_freq=min_freq, max_freq=max_freq)
             frequencies, times, amplitudes = result
-            frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result)
+            frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result, min_frequency=min_display_freq)
 
             renderer = PlotRenderer(xdata=frequencies, ydata=max_amplitudes)
             max_idx = np.argmax(max_amplitudes)
@@ -193,7 +245,7 @@ class MainWindow:
             plots.append(renderer)
             # renderer.show()
             
-        save_data_to_csv('D:/MERA/6-я от 11.05.23/Замер3/test-auto-2.csv', [data_row])
+        # save_data_to_csv('D:/MERA/6-я от 11.05.23/Замер3/test-auto-2.csv', [data_row])
         PlotRenderer.show_multiply(plots=plots)
 
 

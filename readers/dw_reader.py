@@ -1,9 +1,18 @@
 from tkinter import filedialog
+import logging
+import dwdatareader as dw
+
+logger = logging.getLogger(__name__)
+
+dw.encoding = 'utf-8'
+
 
 from .base import BaseReader
 
+from utils.helpers import deep_get
+
 class DWReader(BaseReader):
-    label = 'Dewesoft файл (.d7d)'
+    label = 'Dewesoft файл (.dxd)'
     
     
     def __init__(self, filepath: str = ''):
@@ -11,7 +20,33 @@ class DWReader(BaseReader):
         
     @staticmethod 
     def load():
-        mera_path = filedialog.askopenfilename(filetypes=[("Dewesoft files", "*.d7d")])
+        mera_path = filedialog.askopenfilename(filetypes=[("Dewesoft files", "*.dxd")])
         return mera_path
     
+    def get_sampling_rate(self, ch_name: str = ''):
+        with dw.open(self.filepath) as f:
+            return f.info.sample_rate
+        
+    def get_channels(self):
+        with dw.open(self.filepath) as f:
+           
+            return [ch.name for ch in f.channels]
+        
+    def get_y_units(self, channel: str = '') -> str:
+        with dw.open(self.filepath) as f:
+            for ch in f.channels:
+                if channel == ch.name: 
+                    return deep_get(ch, ['unit'], '')
+      
+        return ''
+    
+    def read_channel(self, channel: str = ''):
+        with dw.open(self.filepath) as f:
+            for ch in f.channels:
+                if channel == ch.name:
+                    dataframe = ch.dataframe() 
+                    return dataframe[channel]
+        
+        return None
+
     

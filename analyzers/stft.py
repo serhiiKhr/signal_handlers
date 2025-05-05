@@ -1,8 +1,16 @@
 import numpy
-from scipy.signal.windows import hann, blackmanharris
+from scipy.signal.windows import hann, blackmanharris, boxcar, hamming, bartlett, flattop, kaiser
 from scipy.signal import stft
 
-from utils import compare_window, ANALYSIS
+from utils import ANALYSIS
+from utils.constants import (
+    DEFAULT_WINDOW,
+    DEFAULT_NPERSEG,
+    DEFAULT_MIN_FREQ,
+    DEFAULT_MAX_FREQ,
+    DEFAULT_OVERLAAP_PERCENT,
+    DEFAULT_MIN_DISPLAY_FREQ
+)
 
 from .base import BaseAnalyzer
 
@@ -10,12 +18,12 @@ class STFT(BaseAnalyzer):
     id: str = ANALYSIS['STFT']
     label: str = "STFT анализ"
     def __init__(self,
-                 nperseg: int = 1,
-                 window: str = 'hann',
-                 min_freq: float = 5.0, 
-                 max_freq: float = 2000.0, 
-                 overlap_percent: float = 0.0,
-                 min_display_freq: float = 100.0
+                 nperseg: int = DEFAULT_WINDOW,
+                 window: str = DEFAULT_NPERSEG,
+                 min_freq: float = DEFAULT_MIN_FREQ, 
+                 max_freq: float = DEFAULT_MAX_FREQ, 
+                 overlap_percent: float = DEFAULT_OVERLAAP_PERCENT,
+                 min_display_freq: float = DEFAULT_MIN_DISPLAY_FREQ
                  ):
         self.nperseg = nperseg * 2
         self.window = window
@@ -49,10 +57,20 @@ class STFT(BaseAnalyzer):
         if len(signal) < self.nperseg:
             _nperseg = len(signal)
         
-        if compare_window('HANNING', self.window):
+        if self.window == 'hann':
             window = hann(_nperseg)
-        elif compare_window('BLACKMANHARRIS', self.window):
+        elif self.window == 'blackman':
             window = blackmanharris(_nperseg)
+        elif self.window == 'boxcar':
+            window = boxcar(_nperseg)
+        elif self.window == 'hamming':
+            window = hamming(_nperseg)
+        elif self.window == 'bartlett':
+            window = bartlett(_nperseg)
+        elif self.window == 'flattop':
+            window = flattop(_nperseg)
+        elif self.window == 'kaiser':
+            window = kaiser(_nperseg, beta=14)
         else:
             window = hann(_nperseg)
                         

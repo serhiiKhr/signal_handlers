@@ -3,9 +3,11 @@ from tkinter import ttk
 
 
 class BaseSettingsDialog:
-    def __init__(self):
+    def __init__(self, data=None):
+        self.rows = 0
         self.settings_win = None
         self._result = None
+        self.data = data or {}
 
     def open(self, parent):
         self.settings_win = tk.Toplevel(parent)
@@ -17,11 +19,17 @@ class BaseSettingsDialog:
         self.build_ui(self.settings_win)
 
         ttk.Button(self.settings_win, text="OK", command=self._save_and_close).grid(
-            column=0, row=self.get_row(), columnspan=2, pady=10
+            column=0, row=self.get_rows(), columnspan=2, pady=10
         )
+
+        self.settings_win.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self.settings_win.wait_window()
 
+    def _on_close(self):
+        self._result = None
+        self.settings_win.destroy()
+        
     def build_ui(self, win):
         raise NotImplementedError("Метод build_ui должен быть переопределён в подклассе")
 
@@ -38,6 +46,6 @@ class BaseSettingsDialog:
     def get_title(self):
         return "Налаштування"
 
-    def get_row(self):
+    def get_rows(self):
         """Номер строки, на которой заканчивается build_ui, чтобы правильно разместить кнопку OK"""
         raise NotImplementedError("Метод get_row должен быть переопределён в подклассе")

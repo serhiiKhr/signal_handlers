@@ -1,4 +1,5 @@
 import tkinter as tk
+from datetime import datetime
 from tkinter import messagebox, ttk, filedialog
 import numpy as np
 import json
@@ -24,7 +25,7 @@ class MainWindow:
         
         
         self.root = tk.Tk()
-        self.root.title("Аналіз .mera/.dat сигналів")
+        self.root.title("Аналіз сигналів (MERA, DWSoft)")
         
         self.method_settings = None
 
@@ -75,19 +76,19 @@ class MainWindow:
         self.channel_list.grid(column=0, row=row, columnspan=2, pady=5)
         row += 1
         
-        self.crop_enabled = tk.BooleanVar(value=True)
-        chk_crop = ttk.Checkbutton(frm, text="Аналізувати фрагмент", variable=self.crop_enabled)
+        self.crop_enabled = tk.BooleanVar(value=False)
+        chk_crop = ttk.Checkbutton(frm, text="Аналізувати фрагмент", variable=self.crop_enabled, command=self.toggle_crop_widgets)
         chk_crop.grid(column=1, row=row, sticky='w', padx=(0, 10))
         row += 1
 
         ttk.Label(frm, text="Початок аналізу [с]:").grid(column=0, row=row, sticky='e', pady=5)
-        self.start_time_entry = ttk.Entry(frm)
+        self.start_time_entry = ttk.Entry(frm, state="disabled")
         self.start_time_entry.insert(0, "0.0")
         self.start_time_entry.grid(column=1, row=row, sticky='w')
         row += 1
 
         ttk.Label(frm, text="Кінець аналізу [с]:").grid(column=0, row=row, sticky='e', pady=5)
-        self.end_time_entry = ttk.Entry(frm)
+        self.end_time_entry = ttk.Entry(frm, state="disabled")
         self.end_time_entry.insert(0, "1.0")
         self.end_time_entry.grid(column=1, row=row, sticky='w')
         row += 1
@@ -106,10 +107,51 @@ class MainWindow:
             column=1, row=row, sticky='e', pady=10
         )
         row += 1
+        
+         # Чекбокс для сохранения статистики
+        self.save_stats = tk.BooleanVar(value=False)
+        save_stats_chk = ttk.Checkbutton(
+            frm,
+            text="Зберігати статистику у файл",
+            variable=self.save_stats,
+            command=self.toggle_stats_widgets  # вызов обработчика
+        )
+        save_stats_chk.grid(column=1, row=row, sticky='w', padx=(0, 10))
+        row += 1
+
+        # Метка и поле ввода пути
+        ttk.Label(frm, text="Шлях до файлу:").grid(column=0, row=row, sticky='e', pady=5)
+        self.stats_path = tk.StringVar()
+        self.stats_entry = ttk.Entry(frm, textvariable=self.stats_path, state='disabled')  # начально — норм, если save_stats=True
+        self.stats_entry.grid(column=1, row=row, sticky='w')
+        row += 1
+
+        # Кнопка выбора файла
+        self.stats_button = ttk.Button(frm, text="Оберіть шлях збереження...", state='disabled', command=self.choose_stats_path)
+        self.stats_button.grid(column=1, row=row, sticky='e', pady=10)
+        row += 1
 
         ttk.Button(frm, text="Аналізувати сигнал", command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
         )
+        
+    def toggle_crop_widgets(self):
+        state = 'normal' if self.crop_enabled.get() else 'disabled'
+        self.start_time_entry.configure(state=state)
+        self.end_time_entry.configure(state=state)
+        
+    def toggle_stats_widgets(self):
+        """Включить/отключить поля в зависимости от состояния чекбокса."""
+        state = 'normal' if self.save_stats.get() else 'disabled'
+        self.stats_entry.configure(state=state)
+        self.stats_button.configure(state=state)
+
+    def choose_stats_path(self):
+        """Открыть диалог выбора пути для сохранения файла."""
+        filepath = filedialog.askdirectory(title="Оберіть папку для збереження")
+        if filepath:
+            self.stats_path.set(filepath)
+
         
     def open_settings_dialog(self):
         analys = self.analyzer_combo.get()
@@ -245,7 +287,12 @@ class MainWindow:
             plots.append(renderer)
             # renderer.show()
             
-        # save_data_to_csv('D:/MERA/6-я от 11.05.23/Замер3/test-auto-2.csv', [data_row])
+        stats_path = self.stats_path.get()
+        if self.save_stats.get() and stats_path:
+            stats_file_name = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
+            save_data_to_csv(f'{stats_path}/{stats_file_name}.csv', [data_row])
+            
+        # 
         PlotRenderer.show_multiply(plots=plots)
 
 

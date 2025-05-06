@@ -1,0 +1,155 @@
+{
+  "uk": {
+      "title": "Аналіз сигналів ({programs})",
+      "stft": {
+        "label": "STFT аналіз",
+        "settings": "Налаштування STFT",
+        "window": "Вікно:",
+        "nperseg": "Кількість ліній спектру:",
+        "min_freq": "Мінімальна частота [Hz]:",
+        "max_freq": "Максимальна частота [Hz]:",
+        "overlap_percent": "Відсоток перекриття [%]:",
+        "min_display_freq": "Мін. відображ. частота [Hz]:"
+      },
+      "dewesoft": {
+        "label": "Dewesoft файл ({extensions})"
+      },
+      "mera": {
+        "label": "MERA файл ({extensions})"
+      },
+      "ui": {
+        "select_json": "Виберіть JSON файл",
+        "select_json_window": "JSON файли",
+        "execute": "Виконати",
+        "open_the_file": "Відкрити {file}",
+        "select_channels": "Оберіть канали:",
+        "analyze_fragment": "Аналізувати фрагмент",
+        "start_of_analysis": "Початок аналізу [с]:",
+        "end_of_analysis": "Кінець аналізу [с]:",
+        "analysis_method": "Метод аналізу:",
+        "settings": "Налаштування",
+        "save_statistics_to_file": "Зберігати статистику у файл",
+        "file_path": "Шлях до файлу:",
+        "choose_save_path": "Оберіть шлях збереження...",
+        "analyze_signal": "Аналізувати сигнал",
+        
+        "choose_folder_to_save": "Оберіть папку для збереження",
+        "warning": "Увага",
+        "select_at_least_one_channel": "Виберіть хоча б один канал.",
+        
+        "frequency": "Частота",
+        "save": "Зберегти",
+        "amplitude": "Амплітуда",
+      
+        "max": "Максимум"
+      },
+      "plot": {
+        "title": "Графік",
+        "xlabel": "Час",
+        "ylabel": "Амплітуда",
+        "graphs": "Графіки",
+        "without_name": "Без назви",
+        "summary_plot": "Зведений графік"
+      }      
+    },
+  "ru": {
+      "title": "Анализ сигналов ({programs})",
+      "stft": {
+        "label": "STFT анализ",
+        "settings": "Настройки STFT",
+        "window": "Окно:",
+        "nperseg": "Количество линий спектра:",
+        "min_freq": "Минимальная частота [Hz]:",
+        "max_freq": "Максимальная частота [Hz]:",
+        "overlap_percent": "Процент перекрытия [%]:",
+        "min_display_freq": "Мин. отображ. частота [Hz]:"
+      },
+      "dewesoft": {
+        "label": "Файл Dewesoft ({extensions})"
+      },
+      "mera": {
+        "label": "Файл MERA ({extensions})"
+      },
+      "ui": {
+        "select_json": "Выберите JSON файл",
+        "select_json_window": "JSON файлы",
+        "execute": "Выполнить",
+        "open_the_file": "Открыть {file}",
+        "select_channels": "Выберите каналы:",
+        "analyze_fragment": "Анализировать фрагмент",
+        "start_of_analysis": "Начало анализа [с]:",
+        "end_of_analysis": "Конец анализа [с]:",
+        "analysis_method": "Метод анализа:",
+        "settings": "Настройки",
+        "save_statistics_to_file": "Сохранять статистику в файл",
+        "file_path": "Путь к файлу:",
+        "choose_save_path": "Выберите путь для сохранения...",
+        "analyze_signal": "Анализировать сигнал",
+        "choose_folder_to_save": "Выберите папку для сохранения",
+        "warning": "Внимание",
+        "select_at_least_one_channel": "Выберите хотя бы один канал.",
+        "frequency": "Частота",
+        "save": "Сохранить",
+        "amplitude": "Амплитуда",
+        "max": "Максимум"
+      },
+      "plot": {
+        "title": "График",
+        "xlabel": "Время",
+        "ylabel": "Амплитуда",
+        "graphs": "Графики",
+        "without_name": "Без названия",
+        "summary_plot": "Сводный график"
+      }
+    },
+  "en": {
+    "title": "Signal analysis ({programs})",
+    "stft": {
+      "label": "STFT analysis",
+      "settings": "STFT settings",
+      "window": "Window:",
+      "nperseg": "Number of spectral lines:",
+      "min_freq": "Minimum frequency [Hz]:",
+      "max_freq": "Maximum frequency [Hz]:",
+      "overlap_percent": "Overlap percentage [%]:",
+      "min_display_freq": "Min. display frequency [Hz]:"
+    },
+    "dewesoft": {
+      "label": "Dewesoft file ({extensions})"
+    },
+    "mera": {
+      "label": "MERA file ({extensions})"
+    },
+    "ui": {
+      "select_json": "Select JSON file",
+      "select_json_window": "JSON files",
+      "execute": "Execute",
+      "open_the_file": "Open {file}",
+      "select_channels": "Select channels:",
+      "analyze_fragment": "Analyze fragment",
+      "start_of_analysis": "Start of analysis [s]:",
+      "end_of_analysis": "End of analysis [s]:",
+      "analysis_method": "Analysis method:",
+      "settings": "Settings",
+      "save_statistics_to_file": "Save statistics to file",
+      "file_path": "File path:",
+      "choose_save_path": "Choose save path...",
+      "analyze_signal": "Analyze signal",
+      "choose_folder_to_save": "Choose folder to save",
+      "warning": "Warning",
+      "select_at_least_one_channel": "Select at least one channel.",
+      "frequency": "Frequency",
+      "save": "Save",
+      "amplitude": "Amplitude",
+      "max": "Maximum"
+    },
+    "plot": {
+      "title": "Plot",
+      "xlabel": "Time",
+      "ylabel": "Amplitude",
+      "graphs": "Graphs",
+      "without_name": "Untitled",
+      "summary_plot": "Summary plot"
+    }
+  }
+}

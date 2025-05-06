@@ -2,7 +2,7 @@ import numpy
 from scipy.signal.windows import hann, blackmanharris, boxcar, hamming, bartlett, flattop, kaiser
 from scipy.signal import stft
 
-from utils import ANALYSIS
+from utils import ANALYSIS, LanguageManager
 from utils.constants import (
     DEFAULT_WINDOW,
     DEFAULT_NPERSEG,
@@ -16,7 +16,7 @@ from .base import BaseAnalyzer
 
 class STFT(BaseAnalyzer):
     id: str = ANALYSIS['STFT']
-    label: str = "STFT анализ"
+    label: str = LanguageManager().get('stft.label')
     def __init__(self,
                  nperseg: int = DEFAULT_WINDOW,
                  window: str = DEFAULT_NPERSEG,
@@ -98,43 +98,43 @@ class STFT(BaseAnalyzer):
 
         frequencies, times, spectres = signal
         """
-        Находит спектр (по времени), в котором максимальное значение амплитуды.
-        Возвращает:
-        - массив амплитуд (по частотам) для этого времени,
-        - соответствующее время,
-        - частоту, на которой находится максимум в этом спектре.
+        Finds the spectrum (over time) where the maximum amplitude occurs.
+        Returns:
+        - an array of amplitudes (over frequencies) at that time,
+        - the corresponding time,
+        - the frequency at which the maximum in that spectrum is located.
         """
         max_frequency = numpy.max(frequencies)
-        amplitudes = numpy.abs(spectres)  # берём амплитуды
+        amplitudes = numpy.abs(spectres) # extract amplitudes
 
-        max_amplitudes_per_time = amplitudes.max(axis=0)  # максимум по частотам для каждого времени
+        max_amplitudes_per_time = amplitudes.max(axis=0) # maximum over frequencies for each time
         
-        # Если min_frequency не задан, работаем как раньше
+        # If min_frequency is not set, proceed as before
         if min_frequency is None or min_frequency > max_frequency:
-            time_idx = numpy.argmax(max_amplitudes_per_time)  # индекс времени с максимальной амплитудой
+            time_idx = numpy.argmax(max_amplitudes_per_time) # Index of the time with the maximum amplitude
         else:
-            # Отсортируем max_amplitudes_per_time по убыванию с сохранением индексов
-            sorted_indices = numpy.argsort(max_amplitudes_per_time)[::-1]  # индексы от максимума к минимуму
+            # Sort max_amplitudes_per_time in descending order while preserving indices
+            sorted_indices = numpy.argsort(max_amplitudes_per_time)[::-1]  # Indices from maximum to minimum
             sorted_max_amplitudes = max_amplitudes_per_time[sorted_indices]
 
-            result_index = 0  # индекс, который будет возвращён
+            result_index = 0  # Index to be returned
             for i in range(len(sorted_max_amplitudes)):
-                max_amplitude_index = sorted_indices[i]  # реальный индекс времени
-                max_freq = frequencies[numpy.argmax(amplitudes[:, max_amplitude_index])]  # частота для этой амплитуды
+                max_amplitude_index = sorted_indices[i]  # The actual time index
+                max_freq = frequencies[numpy.argmax(amplitudes[:, max_amplitude_index])] # frequency for this amplitude
                 
                 if max_freq >= min_frequency:
-                    result_index = max_amplitude_index  # нашли индекс, который подходит
+                    result_index = max_amplitude_index # found the index that matches
                     break
             
-            # Если не нашли подходящий индекс, вернём None
+            # If no matching index is found, return None
             if result_index == 0 and frequencies[numpy.argmax(amplitudes[:, sorted_indices[0]])] < min_frequency:
                 return self.find_peak_frequency_time(signal=signal, min_frequency=None)
             
             time_idx = result_index
 
-        spectrum = amplitudes[:, time_idx]  # спектр (амплитуды) для этого времени
-        time = times[time_idx]              # соответствующее время
-        freq_idx = numpy.argmax(spectrum)   # индекс частоты с наибольшей амплитудой
-        frequency = frequencies[freq_idx]   # сама частота
+        spectrum = amplitudes[:, time_idx]  # spectrum (amplitudes) for this time
+        time = times[time_idx]              # corresponding time
+        freq_idx = numpy.argmax(spectrum)   # frequency index with the highest amplitude
+        frequency = frequencies[freq_idx]   # the frequency itself
 
         return frequency, time, spectrum

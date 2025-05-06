@@ -8,9 +8,10 @@ from .plot_renderer import PlotRenderer
 
 from analyzers import STFT, Filter
 from utils.helpers import get_filename_without_extension
-from utils.constants import FREQ_FRAMES
+from utils.constants import FREQ_FRAMES, SOURCE_PROGRAMS
 from utils.csv_creator import save_data_to_csv
 from utils.execute_json import JSONExecutor
+from utils.language_manager import LanguageManager
 
 from .modals import STFTSettings
 
@@ -22,10 +23,12 @@ class MainWindow:
         self.analyzers = [getattr(a, "label", a.__name__) for a in analyzers]
         self.file_path = None
         
+        self.lang = LanguageManager()
         
         
+        programs = [pr.name for pr in SOURCE_PROGRAMS]
         self.root = tk.Tk()
-        self.root.title("Аналіз сигналів (MERA, DWSoft)")
+        self.root.title(self.lang.get("title", programs=programs))
         
         self.method_settings = None
 
@@ -33,8 +36,8 @@ class MainWindow:
         
     def open_json_script(self):
         file_path = filedialog.askopenfilename(
-            title="Виберіть JSON файл",
-            filetypes=[("JSON Files", "*.json")]
+            title=self.lang.get("ui.select_json"),
+            filetypes=[(self.lang.get("ui.select_json_window"), "*.json")]
         )
         if file_path:
             try:
@@ -53,47 +56,47 @@ class MainWindow:
         frm.grid()
         
         row = 0
-        ttk.Button(frm, text="Виконати", command=self.open_json_script).grid(
+        ttk.Button(frm, text=self.lang.get("ui.execute"), command=self.open_json_script).grid(
             column=1, row=row, sticky='e', pady=10
         )
         row += 1
        
-        # Кнопки выбора файлов
+        # File selection buttons
         for idx, reader in enumerate(self.readers):
             label = getattr(reader, "label", reader.__name__)
             ttk.Button(
                 frm,
-                text=f"Відкрити {label}",
+                text=self.lang.get("ui.open_the_file", file=label),
                 command=lambda cls=reader: self.load_file(cls)
             ).grid(column=0, row=idx + row, columnspan=2, sticky='w', pady=5)
 
         row += len(self.readers)
 
-        # Надпись и список каналов (как раньше — над списком)
-        ttk.Label(frm, text="Виберіть канали:").grid(column=0, row=row, columnspan=2, sticky='w', pady=5)
+        # Label and channel list
+        ttk.Label(frm, text=self.lang.get("ui.select_channels")).grid(column=0, row=row, columnspan=2, sticky='w', pady=5)
         row += 1
         self.channel_list = tk.Listbox(frm, height=8, selectmode=tk.MULTIPLE, width=50)
         self.channel_list.grid(column=0, row=row, columnspan=2, pady=5)
         row += 1
         
         self.crop_enabled = tk.BooleanVar(value=False)
-        chk_crop = ttk.Checkbutton(frm, text="Аналізувати фрагмент", variable=self.crop_enabled, command=self.toggle_crop_widgets)
+        chk_crop = ttk.Checkbutton(frm, text=self.lang.get("ui.analyze_fragment"), variable=self.crop_enabled, command=self.toggle_crop_widgets)
         chk_crop.grid(column=1, row=row, sticky='w', padx=(0, 10))
         row += 1
 
-        ttk.Label(frm, text="Початок аналізу [с]:").grid(column=0, row=row, sticky='e', pady=5)
+        ttk.Label(frm, text=self.lang.get("ui.start_of_analysis")).grid(column=0, row=row, sticky='e', pady=5)
         self.start_time_entry = ttk.Entry(frm, state="disabled")
         self.start_time_entry.insert(0, "0.0")
         self.start_time_entry.grid(column=1, row=row, sticky='w')
         row += 1
 
-        ttk.Label(frm, text="Кінець аналізу [с]:").grid(column=0, row=row, sticky='e', pady=5)
+        ttk.Label(frm, text=self.lang.get("ui.end_of_analysis")).grid(column=0, row=row, sticky='e', pady=5)
         self.end_time_entry = ttk.Entry(frm, state="disabled")
         self.end_time_entry.insert(0, "1.0")
         self.end_time_entry.grid(column=1, row=row, sticky='w')
         row += 1
         
-        ttk.Label(frm, text="Метод аналізу:").grid(column=0, row=row, sticky='e', pady=5)
+        ttk.Label(frm, text=self.lang.get("ui.analysis_method")).grid(column=0, row=row, sticky='e', pady=5)
         self.analyzer_combo = ttk.Combobox(frm, values=self.analyzers)
     
         if self.analyzers:
@@ -103,35 +106,35 @@ class MainWindow:
         self.get_default_settings(analys=self.analyzer_combo.get())
         
 
-        ttk.Button(frm, text="Налаштування", command=self.open_settings_dialog).grid(
+        ttk.Button(frm, text=self.lang.get("ui.settings"), command=self.open_settings_dialog).grid(
             column=1, row=row, sticky='e', pady=10
         )
         row += 1
         
-         # Чекбокс для сохранения статистики
+        # Checkbox for saving statistics
         self.save_stats = tk.BooleanVar(value=False)
         save_stats_chk = ttk.Checkbutton(
             frm,
-            text="Зберігати статистику у файл",
+            text=self.lang.get("ui.save_statistics_to_file"),
             variable=self.save_stats,
-            command=self.toggle_stats_widgets  # вызов обработчика
+            command=self.toggle_stats_widgets  # Handler call
         )
         save_stats_chk.grid(column=1, row=row, sticky='w', padx=(0, 10))
         row += 1
 
-        # Метка и поле ввода пути
-        ttk.Label(frm, text="Шлях до файлу:").grid(column=0, row=row, sticky='e', pady=5)
+        # Label and path entry field
+        ttk.Label(frm, text=self.lang.get("ui.file_path")).grid(column=0, row=row, sticky='e', pady=5)
         self.stats_path = tk.StringVar()
-        self.stats_entry = ttk.Entry(frm, textvariable=self.stats_path, state='disabled')  # начально — норм, если save_stats=True
+        self.stats_entry = ttk.Entry(frm, textvariable=self.stats_path, state='disabled')  # Disabled if save_stats is False
         self.stats_entry.grid(column=1, row=row, sticky='w')
         row += 1
 
-        # Кнопка выбора файла
-        self.stats_button = ttk.Button(frm, text="Оберіть шлях збереження...", state='disabled', command=self.choose_stats_path)
+        # File selection button
+        self.stats_button = ttk.Button(frm, text=self.lang.get("ui.choose_save_path"), state='disabled', command=self.choose_stats_path)
         self.stats_button.grid(column=1, row=row, sticky='e', pady=10)
         row += 1
 
-        ttk.Button(frm, text="Аналізувати сигнал", command=self.analyze_selected).grid(
+        ttk.Button(frm, text=self.lang.get("ui.analyze_signal"), command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
         )
         
@@ -141,14 +144,14 @@ class MainWindow:
         self.end_time_entry.configure(state=state)
         
     def toggle_stats_widgets(self):
-        """Включить/отключить поля в зависимости от состояния чекбокса."""
+        """Enable or disable fields depending on the checkbox state."""
         state = 'normal' if self.save_stats.get() else 'disabled'
         self.stats_entry.configure(state=state)
         self.stats_button.configure(state=state)
 
     def choose_stats_path(self):
-        """Открыть диалог выбора пути для сохранения файла."""
-        filepath = filedialog.askdirectory(title="Оберіть папку для збереження")
+        """Open a dialog to select a path for saving the file."""
+        filepath = filedialog.askdirectory(title=self.lang.get("ui.choose_folder_to_save"))
         if filepath:
             self.stats_path.set(filepath)
 
@@ -202,7 +205,7 @@ class MainWindow:
     def analyze_selected(self):
         selected_channels = [self.channel_list.get(i) for i in self.channel_list.curselection()]
         if not selected_channels:
-            messagebox.showwarning("Увага", "Виберіть хоча б один канал.")
+            messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.select_at_least_one_channel"))
             return
         
         crop_enabled = self.crop_enabled.get()

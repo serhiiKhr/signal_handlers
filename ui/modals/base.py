@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from utils.language_manager import LanguageManager
 
 class BaseSettingsDialog:
     def __init__(self, data=None):
@@ -44,8 +45,9 @@ class BaseSettingsDialog:
         return self._result
 
     def get_title(self):
-        return "Налаштування"
+        lang = LanguageManager()
+        return lang.get("ui.settings")
 
     def get_rows(self):
-        """Номер строки, на которой заканчивается build_ui, чтобы правильно разместить кнопку OK"""
+        """The line number where build_ui ends, to correctly position the OK button."""
         raise NotImplementedError("Метод get_row должен быть переопределён в подклассе")

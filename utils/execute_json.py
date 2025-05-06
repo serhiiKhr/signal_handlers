@@ -115,7 +115,7 @@ class JSONExecutor:
                     self.log_error(message=f"source_program обязательны. Ошибка в файле: {file_settings}")
                     raise ValueError("source_program обязателен")
                 
-                # Проверка обязательных параметров
+                # Checking mandatory parameters
                 if not file_path:
                     self.log_error(message=f"file_path обязательны. Ошибка в файле: {file_settings}")
                     raise  ValueError("file_path обязательны")
@@ -303,7 +303,7 @@ class JSONExecutor:
             log("'files' должен быть списком.")
             return errors
 
-        # Проверка на 'groups_settings'
+        # Check for 'groups_settings'
         groups_settings = settings.get('groups_settings', {})
         if 'groups' in groups_settings:
             groups = groups_settings['groups']
@@ -365,7 +365,7 @@ class JSONExecutor:
             file_id = file_settings.get("id")
             file_path = file_settings.get("file_path")
             time_frames = file_settings.get("time_frames", [])
-            # Проверка ID самого файла
+            # Check the ID of the file
             if file_id == target_id:
                 output_path = file_settings.get("output_path", global_settings["output_path"])
                 if not output_path:
@@ -394,11 +394,11 @@ class JSONExecutor:
         
     def assign_ids(self, settings: dict) -> None:
         for file_settings in settings.get("files", []):
-            # Добавить id файлу, если его нет
+            # Add an ID to the file if it's missing
             if "id" not in file_settings:
                 file_settings["id"] = str(uuid.uuid4())
 
-            # Добавить id каждому time_frame, если они есть
+            # Add an ID to each time_frame if they exist
             time_frames = file_settings.get("time_frames", [])
             for tf in time_frames:
                 if "id" not in tf:

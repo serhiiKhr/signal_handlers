@@ -8,10 +8,10 @@ from .base import BaseAnalyzer
 class Filter(BaseAnalyzer):
     def __init__(self, lowcut=None, highcut=None, order=4):
         """
-        :param sampling_rate: Частота дискретизации сигнала
-        :param lowcut: Нижняя граница фильтрации (None — не использовать)
-        :param highcut: Верхняя граница фильтрации (None — не использовать)
-        :param order: Порядок фильтра
+        :param sampling_rate: Sampling rate of the signal  
+        :param lowcut: Lower cutoff frequency for filtering (None — do not apply)  
+        :param highcut: Upper cutoff frequency for filtering (None — do not apply)  
+        :param order: Filter order  
         """
         self.lowcut = lowcut
         self.highcut = highcut
@@ -31,7 +31,7 @@ class Filter(BaseAnalyzer):
             btype = 'low'
             b, a = butter(self.order, self.highcut / nyq, btype=btype)
         else:
-            return data  # Фильтр не применяется
+            return data  # No filtering is performed
         return filtfilt(b, a, data)
 
     def analyze(self, signal, **kwargs):

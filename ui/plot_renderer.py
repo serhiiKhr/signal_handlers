@@ -7,8 +7,11 @@ import os
 from datetime import datetime
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from utils.language_manager import LanguageManager
+
+lang = LanguageManager()
 class PlotRenderer:
-    def __init__(self, title="График", xlabel="Время", ylabel="Амплитуда", description="",
+    def __init__(self, title=lang.get("plot.title"), xlabel=lang.get("plot.xlabel"), ylabel=lang.get("ui.amplitude"), description="",
                  xdata=None, ydata=None, xlim=None, ylim=None, peaks=None):
         self.title = title
         self.xlabel = xlabel
@@ -66,13 +69,13 @@ class PlotRenderer:
         desc_text.grid(row=3, column=1, sticky="ew", padx=5)
 
         # Save button (aligned right)
-        save_btn = ttk.Button(control_frame, text="Сохранить", command=lambda: self._save_dialog(
+        save_btn = ttk.Button(control_frame, text=lang.get("ui.save"), command=lambda: self._save_dialog(
             title_entry.get(), xlabel_entry.get(), ylabel_entry.get(), desc_text.get("1.0", "end").strip()))
         save_btn.grid(row=4, column=1, sticky="e", pady=(5, 0))
 
         control_frame.columnconfigure(1, weight=1)
 
-        # не блокирует основной интерфейс
+        # does not block the main interface
         window.update_idletasks()
         x = 100 + len(window.master.winfo_children()) * 40
         y = 100 + len(window.master.winfo_children()) * 30
@@ -84,8 +87,8 @@ class PlotRenderer:
             return
 
         n = len(plots)
-        # Увеличиваем размер фигуры по числу графиков
-        fig_height = 3 * n  # по 3 дюйма на график
+        # Increase the figure size based on the number of plots
+        fig_height = 3 * n  # 3 inches per plot
         fig, axes = plt.subplots(n, 1, figsize=(8.27, fig_height), dpi=dpi, constrained_layout=True)
 
         if n == 1:
@@ -106,16 +109,16 @@ class PlotRenderer:
         n = len(plots)
         fig, axes = plt.subplots(n, 1, figsize=(6, 3 * n), dpi=100)
         if n == 1:
-            axes = [axes]  # приведение к списку для единообразия
+            axes = [axes]  # Convert to list for consistency
 
         for plot, ax in zip(plots, axes):
             plot._create_figure(ax)
 
         fig.tight_layout(pad=2.0)
 
-        # Tkinter окно
+        # Tkinter window
         window = tk.Toplevel()
-        window.title("Множественные графики")
+        window.title(lang.get("plot.graphs"))
 
         canvas = FigureCanvasTkAgg(fig, master=window)
         canvas.draw()
@@ -135,7 +138,7 @@ class PlotRenderer:
         peaks = []
   
         for plot in plots:
-            title = plot.title or "Без названия"
+            title = plot.title or lang.get("plot.without_name")
             if plot.description:
                 label = f"{title}\n{plot.description}"
             else:
@@ -144,26 +147,14 @@ class PlotRenderer:
             ax.plot(plot.xdata, plot.ydata, label=label, linewidth=1)
             for peak in plot.peaks:
                 peaks.append(peak) 
-                
-            # # Описание
-            # if plot.description:
-            #     descriptions.append(f"{label}:\n{plot.description}")
-            # else:
-            #     descriptions.append(f"{label}")
-                
-        # if descriptions:
-        #     full_description = "\n\n".join(descriptions)
-        #     ax.text(0.01, 0.99, full_description, transform=ax.transAxes,
-        #             fontsize=8, verticalalignment='top', horizontalalignment='left',
-        #             bbox=dict(facecolor='white', alpha=0.6), clip_on=True)
 
-        # Собираем лимиты
+        # Collecting limits
         xmins = [plot.xlim[0] for plot in plots if plot.xlim]
         xmaxs = [plot.xlim[1] for plot in plots if plot.xlim]
         ymins = [plot.ylim[0] for plot in plots if plot.ylim]
         ymaxs = [plot.ylim[1] for plot in plots if plot.ylim]
     
-        # Устанавливаем лимиты, если есть хоть один
+        # Set limits if there is at least one
         if xmins and xmaxs:
             ax.set_xlim(min(xmins), max(xmaxs))
         if ymins and ymaxs:
@@ -173,9 +164,9 @@ class PlotRenderer:
             ax.scatter(peak['x'], peak['y'], color='red', zorder=5,
                        marker='o', facecolors='none', edgecolors='red', s=50)
  
-        ax.set_title("Сводный график")
-        ax.set_xlabel("Время")
-        ax.set_ylabel("Амплитуда")
+        ax.set_title(lang.get("plot.summary_plot"))
+        ax.set_xlabel(lang.get("plot.xlabel"))
+        ax.set_ylabel(lang.get("plot.ylabel"))
         ax.grid(True)
 
         if len(plots) > 1:
@@ -186,11 +177,11 @@ class PlotRenderer:
         fig.savefig(path, dpi=dpi)
         plt.close(fig)
 
-        # Добавляем легенду, если есть несколько графиков
+        # Add a legend if there are multiple plots
         if len(plots) > 1:
             ax.legend()
 
-        # Сохраняем изображение
+        # image saving
         os.makedirs(os.path.dirname(path), exist_ok=True)
         fig.tight_layout(pad=1.0)
         fig.savefig(path, dpi=dpi)
@@ -217,7 +208,7 @@ class PlotRenderer:
         if self.ylim: ax.set_ylim(*self.ylim)
         
         for peak in self.peaks:
-            ax.scatter(peak['x'], peak['y'], color='red', zorder=5, marker='o', facecolors='none', edgecolors='red', s=50, label='Максимум')
+            ax.scatter(peak['x'], peak['y'], color='red', zorder=5, marker='o', facecolors='none', edgecolors='red', s=50, label=lang.get("ui.max"))
         
         if self.description:
             ax.text(0.02, 0.97, 

@@ -9,18 +9,21 @@ dw.encoding = 'utf-8'
 
 from .base import BaseReader
 
+from utils import LanguageManager
 from utils.helpers import deep_get
+from utils.constants import DEWESOFT
 
+lang = LanguageManager()
+extensions = ', '.join(DEWESOFT.extensions)
 class DWReader(BaseReader):
-    label = 'Dewesoft файл (.dxd)'
-    
+    label = lang.get('dewesoft.label', extensions=extensions)
     
     def __init__(self, filepath: str = ''):
         self.filepath = filepath
         
     @staticmethod 
     def load():
-        mera_path = filedialog.askopenfilename(filetypes=[("Dewesoft files", "*.dxd")])
+        mera_path = filedialog.askopenfilename(filetypes=[(DWReader.label, extensions)])
         return mera_path
     
     def get_sampling_rate(self, ch_name: str = ''):

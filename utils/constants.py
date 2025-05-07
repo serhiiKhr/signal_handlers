@@ -27,8 +27,8 @@ class SourceProgramm:
         self.extensions = extensions
         
 MERA = SourceProgramm(id='mera', name='MERA', extensions=['.mera'])
-SOURCE_PROGRAMS = [MERA]
-
+DEWESOFT = SourceProgramm(id='dewesoft', name='Dewesoft', extensions=['.dxd']) 
+SOURCE_PROGRAMS = [MERA, DEWESOFT]
 
 def get_windows():
     return WINDOWS

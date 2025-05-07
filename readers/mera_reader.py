@@ -7,16 +7,21 @@ import os
 from .base import BaseReader
 
 from utils.helpers import deep_get
+from utils.language_manager import LanguageManager
+from utils.constants import MERA
+
+lang = LanguageManager()
+extensions = ', '.join(MERA.extensions)
 
 class MeraReader(BaseReader):
-    label = "MERA файл (.mera)"
+    label = lang.get('mera.label', extensions=extensions)
     
     def __init__(self, filepath: str = ''):
         self.filepath = filepath
     
     @staticmethod
     def load():
-        mera_path = filedialog.askopenfilename(filetypes=[("MERA files", "*.mera")])
+        mera_path = filedialog.askopenfilename(filetypes=[(MeraReader.label, extensions)])
         return mera_path
     
     def get_sampling_rate(self, ch_name: str = ''):
@@ -58,7 +63,6 @@ class MeraReader(BaseReader):
         k0 = float(meta.get("k0", 0))
         k1 = float(meta.get("k1", 1))
         polyTX = int(meta.get("PolyTX", 0))
-        y_units = meta.get("YUnits", "В").lower()
 
         dtype_map = {
             "I1": np.int8, "UI1": np.uint8,

@@ -4,10 +4,11 @@ from tkinter import ttk
 from .base import BaseSettingsDialog
 
 from utils.constants import WINDOWS, NPERSEGS, DEFAULT_WINDOW, DEFAULT_NPERSEG, DEFAULT_MIN_FREQ, DEFAULT_MAX_FREQ, DEFAULT_OVERLAAP_PERCENT, DEFAULT_MIN_DISPLAY_FREQ
-
+from utils.language_manager import LanguageManager
 class STFTSettings(BaseSettingsDialog):
     def __init__(self, data=None):
         super().__init__()
+        self.lang = LanguageManager()
         
         self.window_value = (data or {}).get('window', DEFAULT_WINDOW)
         self.nperseg_value = (data or {}).get('nperseg', DEFAULT_NPERSEG)
@@ -17,41 +18,41 @@ class STFTSettings(BaseSettingsDialog):
         self.min_display_freq_value = (data or {}).get('min_display_freq', DEFAULT_MIN_DISPLAY_FREQ)
 
     def get_title(self):
-        return "Налаштування STFT"
+        return self.lang.get("stft.settings")
 
     def build_ui(self, win):
-        ttk.Label(win, text="Вікно FFT:").grid(column=0, row=0, sticky='e', padx=10, pady=5)
+        ttk.Label(win, text=self.lang.get("stft.window")).grid(column=0, row=0, sticky='e', padx=10, pady=5)
         self.rows = 0
         self.window_cb = ttk.Combobox(win, values=WINDOWS, state="readonly")
         self.window_cb.set(self.window_value)
         self.window_cb.grid(column=1, row=self.rows, padx=10, pady=5)
         self.rows += 1
 
-        ttk.Label(win, text="Кількість ліній спектру:").grid(column=0, row=1, sticky='e', padx=10, pady=5)
+        ttk.Label(win, text=self.lang.get("stft.nperseg")).grid(column=0, row=1, sticky='e', padx=10, pady=5)
         self.nperseg_cb = ttk.Combobox(win, values=NPERSEGS, state="readonly")
         self.nperseg_cb.set(self.nperseg_value)
         self.nperseg_cb.grid(column=1, row=self.rows, padx=10, pady=5)
         self.rows += 1
         
-        ttk.Label(win, text="Мінімальна частота [Hz]:").grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
+        ttk.Label(win, text=self.lang.get("stft.min_freq")).grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
         self.freq_min_entry = ttk.Entry(win)
         self.freq_min_entry.insert(0, str(self.min_freq_value))
         self.freq_min_entry.grid(row=self.rows, column=1, pady=5)
         self.rows += 1
 
-        ttk.Label(win, text="Максимальна частота [Hz]:").grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
+        ttk.Label(win, text=self.lang.get("stft.max_freq")).grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
         self.freq_max_entry = ttk.Entry(win)
         self.freq_max_entry.insert(0, str(self.max_freq_value))
         self.freq_max_entry.grid(row=self.rows, column=1, pady=5)
         self.rows += 1
 
-        ttk.Label(win, text="Відсоток перекриття [%]:").grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
+        ttk.Label(win, text=self.lang.get("stft.overlap_percent")).grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
         self.overlap_entry = ttk.Entry(win)
         self.overlap_entry.insert(0, str(self.overlap_percent_value))
         self.overlap_entry.grid(row=self.rows, column=1, pady=5)
         self.rows += 1
 
-        ttk.Label(win, text="Мін. відображ. частота [Hz]:").grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
+        ttk.Label(win, text=self.lang.get("stft.min_display_freq")).grid(row=self.rows, column=0, sticky='e', padx=10, pady=5)
         self.min_display_freq_entry = ttk.Entry(win)
         self.min_display_freq_entry.insert(0, str(self.min_display_freq_value))
         self.min_display_freq_entry.grid(row=self.rows, column=1, pady=5)

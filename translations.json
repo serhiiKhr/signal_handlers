@@ -1,0 +1,250 @@
+{
+  "uk": {
+    "title": "Аналіз сигналів ({programs})",
+    "stft": {
+      "label": "STFT аналіз",
+      "settings": "Налаштування STFT",
+      "window": "Вікно:",
+      "nperseg": "Кількість ліній спектру:",
+      "min_freq": "Мінімальна частота [Hz]:",
+      "max_freq": "Максимальна частота [Hz]:",
+      "overlap_percent": "Відсоток перекриття [%]:",
+      "min_display_freq": "Мін. відображ. частота [Hz]:"
+      },
+    "dewesoft": {
+      "label": "Dewesoft файл ({extensions})"
+    },
+    "mera": {
+      "label": "MERA файл ({extensions})"
+    },
+    "ui": {
+      "select_json": "Виберіть JSON файл",
+      "select_json_window": "JSON файли",
+      "execute": "Виконати",
+      "open_the_file": "Відкрити {file}",
+      "select_channels": "Оберіть канали:",
+      "analyze_fragment": "Аналізувати фрагмент",
+      "start_of_analysis": "Початок аналізу [с]:",
+      "end_of_analysis": "Кінець аналізу [с]:",
+      "analysis_method": "Метод аналізу:",
+      "settings": "Налаштування",
+      "save_statistics_to_file": "Зберігати статистику у файл",
+      "file_path": "Шлях до файлу:",
+      "choose_save_path": "Оберіть шлях збереження...",
+      "analyze_signal": "Аналізувати сигнал",
+      
+      "choose_folder_to_save": "Оберіть папку для збереження",
+      "warning": "Увага",
+      "select_at_least_one_channel": "Виберіть хоча б один канал.",
+      
+      "frequency": "Частота",
+      "save": "Зберегти",
+      "amplitude": "Амплітуда",
+    
+      "max": "Максимум",
+      "hz": "Гц"
+    },
+    "plot": {
+      "title": "Графік",
+      "xlabel": "Час",
+      "ylabel": "Амплітуда",
+      "graphs": "Графіки",
+      "without_name": "Без назви",
+      "summary_plot": "Зведений графік",
+      "formatted_time": "На {min} хв {sec} сек"
+    },
+    "logger": {
+      "app_started": "Програму запущено.",
+      "field_required": "Параметр {field} є обов’язковим.",
+      "unknown_method": "Невідомий метод: {method}",
+      "must_be_overridden": "Метод {method} повинен бути перевизначений у підкласі",
+      "file_read_error": "Помилка під час читання файлу: {error}",
+      "file_saved": "Файл збережено за шляхом: {file_path}",
+      "file_saving_cancelled": "Збереження скасовано.",
+      "unknown_source_program": "Невідома програма джерела: {source_program}",
+      "file_from_cache": "Файл {file_path}, канал {channel} взятий з кешу",
+      "field_required_error": "{field} обов'язкові. Помилка в файлі: {file_settings}",
+      "method_not_implemented": "Метод обробки {method_name} не реалізований.",
+      "global_settings_error": "Глобальні налаштування '{method}' повинні містити параметр '{name}'.",
+      "must_be_list": "'{prop_name}' повинні бути списком.",
+      "elements_must_be_strings": "В '{prop_name}' всі елементи повинні бути рядками (каналами).",
+      "prop_must_be_boolean": "'{prop_name}' повинен бути булевим значенням.",
+      "no_channel_in_computation_results": "Немає каналу {channel} в списку результатів обчислення",
+
+      "all_elements_must_be_strings": "Усі елементи в '{prop_name}' повинні бути рядками.",
+      "missing_file_path": "[Файл {file_index}] Відсутній обов'язковий параметр 'file_path'.",
+      "missing_method_name": "[Файл {file_index}] Налаштування 'method' відсутні або не містять обов'язковий параметр 'name'.",
+      "missing_channels": "[Файл {file_index}] Не вказані канали: ні в файлі, ні глобально.",
+      "missing_source_program": "[Файл {file_index}] Не вказано 'source_program': ні в файлі, ні глобально.",
+      "missing_time_frames_list": "[Файл {file_index}] 'time_frames' повинно бути списком.",
+      "time_frames_not_dict": "[Файл {file_index}] time_frames[{time_frame_index}] повинно бути словником.",
+      "missing_field_in_time_frame": "[Файл {file_index}] time_frames[{time_frame_index}] відсутнє обов'язкове поле '{field}'.",
+      "target_id_not_found": "ID '{target_id}' не знайдений у файлах або time_frames."
+
+    }
+  },
+  "ru": {
+    "title": "Анализ сигналов ({programs})",
+    "stft": {
+      "label": "Анализ STFT",
+      "settings": "Настройки STFT",
+      "window": "Окно:",
+      "nperseg": "Число линий спектра:",
+      "min_freq": "Минимальная частота [Гц]:",
+      "max_freq": "Максимальная частота [Гц]:",
+      "overlap_percent": "Процент перекрытия [%]:",
+      "min_display_freq": "Мин. отображ. частота [Гц]:"
+    },
+    "dewesoft": {
+      "label": "Файл Dewesoft ({extensions})"
+    },
+    "mera": {
+      "label": "Файл MERA ({extensions})"
+    },
+    "ui": {
+      "select_json": "Выберите JSON-файл",
+      "select_json_window": "JSON-файлы",
+      "execute": "Выполнить",
+      "open_the_file": "Открыть {file}",
+      "select_channels": "Выберите каналы:",
+      "analyze_fragment": "Анализировать фрагмент",
+      "start_of_analysis": "Начало анализа [с]:",
+      "end_of_analysis": "Конец анализа [с]:",
+      "analysis_method": "Метод анализа:",
+      "settings": "Настройки",
+      "save_statistics_to_file": "Сохранять статистику в файл",
+      "file_path": "Путь к файлу:",
+      "choose_save_path": "Выберите путь для сохранения...",
+      "analyze_signal": "Анализировать сигнал",
+
+      "choose_folder_to_save": "Выберите папку для сохранения",
+      "warning": "Внимание",
+      "select_at_least_one_channel": "Выберите хотя бы один канал.",
+
+      "frequency": "Частота",
+      "save": "Сохранить",
+      "amplitude": "Амплитуда",
+
+      "max": "Максимум",
+      "hz": "Гц"
+    },
+    "plot": {
+      "title": "График",
+      "xlabel": "Время",
+      "ylabel": "Амплитуда",
+      "graphs": "Графики",
+      "without_name": "Без названия",
+      "summary_plot": "Сводный график",
+      "formatted_time": "На {min} мин {sec} сек"
+    },
+    "logger": {
+      "app_started": "Программа запущена.",
+      "field_required": "Параметр {field} обязателен.",
+      "unknown_method": "Неизвестный метод: {method}",
+      "must_be_overridden": "Метод {method} должен быть переопределён в подклассе",
+      "file_read_error": "Ошибка при чтении файла: {error}",
+      "file_saved": "Файл сохранён по пути: {file_path}",
+      "file_saving_cancelled": "Сохранение отменено.",
+      "unknown_source_program": "Неизвестная программа источника: {source_program}",
+      "file_from_cache": "Файл {file_path}, канал {channel} взят из кэша",
+      "field_required_error": "{field} обязательны. Ошибка в файле: {file_settings}",
+      "method_not_implemented": "Метод обработки {method_name} не реализован.",
+      "global_settings_error": "Глобальные настройки '{method}' должны содержать параметр '{name}'.",
+      "must_be_list": "'{prop_name}' должно быть списком.",
+      "elements_must_be_strings": "Все элементы в '{prop_name}' должны быть строками (каналами).",
+      "prop_must_be_boolean": "'{prop_name}' должно быть булевым значением.",
+      "no_channel_in_computation_results": "Канал {channel} не найден в результатах вычислений.",
+      "all_elements_must_be_strings": "Все элементы в '{prop_name}' должны быть строками.",
+      "missing_file_path": "[Файл {file_index}] Отсутствует обязательный параметр 'file_path'.",
+      "missing_method_name": "[Файл {file_index}] Настройки 'method' отсутствуют или не содержат обязательный параметр 'name'.",
+      "missing_channels": "[Файл {file_index}] Не указаны каналы: ни в файле, ни глобально.",
+      "missing_source_program": "[Файл {file_index}] Не указан 'source_program': ни в файле, ни глобально.",
+      "missing_time_frames_list": "[Файл {file_index}] 'time_frames' должен быть списком.",
+      "time_frames_not_dict": "[Файл {file_index}] time_frames[{time_frame_index}] должен быть словарём.",
+      "missing_field_in_time_frame": "[Файл {file_index}] time_frames[{time_frame_index}] отсутствует обязательное поле '{field}'.",
+      "target_id_not_found": "ID '{target_id}' не найден в файлах или time_frames."
+    }
+  },
+ "en": {
+    "title": "Signal Analysis ({programs})",
+    "stft": {
+      "label": "STFT Analysis",
+      "settings": "STFT Settings",
+      "window": "Window:",
+      "nperseg": "Spectrum lines:",
+      "min_freq": "Minimum frequency [Hz]:",
+      "max_freq": "Maximum frequency [Hz]:",
+      "overlap_percent": "Overlap percentage [%]:",
+      "min_display_freq": "Min. display frequency [Hz]:"
+    },
+    "dewesoft": {
+      "label": "Dewesoft file ({extensions})"
+    },
+    "mera": {
+      "label": "MERA file ({extensions})"
+    },
+    "ui": {
+      "select_json": "Select JSON file",
+      "select_json_window": "JSON files",
+      "execute": "Execute",
+      "open_the_file": "Open {file}",
+      "select_channels": "Select channels:",
+      "analyze_fragment": "Analyze fragment",
+      "start_of_analysis": "Start of analysis [s]:",
+      "end_of_analysis": "End of analysis [s]:",
+      "analysis_method": "Analysis method:",
+      "settings": "Settings",
+      "save_statistics_to_file": "Save statistics to file",
+      "file_path": "File path:",
+      "choose_save_path": "Choose save path...",
+      "analyze_signal": "Analyze signal",
+
+      "choose_folder_to_save": "Choose folder to save",
+      "warning": "Warning",
+      "select_at_least_one_channel": "Select at least one channel.",
+
+      "frequency": "Frequency",
+      "save": "Save",
+      "amplitude": "Amplitude",
+
+      "max": "Maximum",
+      "hz": "Hz"
+    },
+    "plot": {
+      "title": "Plot",
+      "xlabel": "Time",
+      "ylabel": "Amplitude",
+      "graphs": "Graphs",
+      "without_name": "Untitled",
+      "summary_plot": "Summary Plot",
+      "formatted_time": "At {min} min {sec} sec"
+    },
+    "logger": {
+      "app_started": "Application started.",
+      "field_required": "Parameter {field} is required.",
+      "unknown_method": "Unknown method: {method}",
+      "must_be_overridden": "Method {method} must be overridden in a subclass",
+      "file_read_error": "Error reading file: {error}",
+      "file_saved": "File saved to: {file_path}",
+      "file_saving_cancelled": "Saving cancelled.",
+      "unknown_source_program": "Unknown source program: {source_program}",
+      "file_from_cache": "File {file_path}, channel {channel} loaded from cache",
+      "field_required_error": "{field} is required. Error in file: {file_settings}",
+      "method_not_implemented": "Processing method {method_name} not implemented.",
+      "global_settings_error": "Global settings '{method}' must contain parameter '{name}'.",
+      "must_be_list": "'{prop_name}' must be a list.",
+      "elements_must_be_strings": "All elements in '{prop_name}' must be strings (channels).",
+      "prop_must_be_boolean": "'{prop_name}' must be a boolean.",
+      "no_channel_in_computation_results": "Channel {channel} not found in computation results.",
+      "all_elements_must_be_strings": "All elements in '{prop_name}' must be strings.",
+      "missing_file_path": "[File {file_index}] Required parameter 'file_path' is missing.",
+      "missing_method_name": "[File {file_index}] 'method' settings are missing or do not contain required parameter 'name'.",
+      "missing_channels": "[File {file_index}] No channels specified: neither in file nor globally.",
+      "missing_source_program": "[File {file_index}] 'source_program' not specified: neither in file nor globally.",
+      "missing_time_frames_list": "[File {file_index}] 'time_frames' must be a list.",
+      "time_frames_not_dict": "[File {file_index}] time_frames[{time_frame_index}] must be a dictionary.",
+      "missing_field_in_time_frame": "[File {file_index}] time_frames[{time_frame_index}] is missing required field '{field}'.",
+      "target_id_not_found": "ID '{target_id}' not found in files or time_frames."
+    }
+  }
+}

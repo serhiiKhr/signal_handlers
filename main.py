@@ -2,20 +2,14 @@ from readers import BaseReader, MeraReader, DWReader
 from analyzers import BaseAnalyzer, STFT
 
 from ui import MainWindow
+from utils import LanguageManager, Logger
 
 def main():
-    print("Программа запущена.")
+    lang = LanguageManager()
+    Logger.info(lang.get("logger.app_started"))
+    
+    
     MainWindow(readers=[MeraReader, DWReader], analyzers=[STFT]).run()
-
-    # Здесь можно будет создать экземпляры ридеров и процессоров
-    # Например:
-    # reader = SomeReader()
-    # data = reader.read("file.txt")
-    #
-    # processor = SomeProcessor()
-    # result = processor.process(data)
-    #
-    # print(result)
 
 if __name__ == "__main__":
     main()

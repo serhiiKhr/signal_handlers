@@ -1,26 +1,31 @@
 import pandas as pd
 
+from utils.language_manager import LanguageManager
+from utils.logger import Logger
+
 def save_data_to_csv(file_path, datarows):
     df = pd.DataFrame(datarows).set_index('filename')
     
-    # Выравнивание столбца "filename" по ширине
-    max_filename_length = max(df.index.str.len())  # Находим максимальную длину имени файла
-    df.index = df.index.str.ljust(max_filename_length)  # Добавляем пробелы к файлам, чтобы они выровнялись
+    lang = LanguageManager()
     
-    # Выравнивание остальных столбцов по ширине
-    max_lengths = {col: max(df[col].apply(lambda x: len(str(x)))) for col in df.columns}  # Максимальная длина по каждому столбцу
-    max_lengths = {col: max(max_lengths[col], len(col)) for col in df.columns}  # Учитываем длину заголовков
+    # Aligning the "filename" column by width
+    max_filename_length = max(df.index.str.len())  # Find the maximum length of the filename
+    df.index = df.index.str.ljust(max_filename_length)  # Add spaces to the filenames to align them
+    
+    # Align the remaining columns by width
+    max_lengths = {col: max(df[col].apply(lambda x: len(str(x)))) for col in df.columns}  # Maximum length for each column
+    max_lengths = {col: max(max_lengths[col], len(col)) for col in df.columns}  # Take into account the length of the headers
     
     if file_path:
-        # Сохраняем файл с отступами в качестве разделителей
+        # Save the file with indents as delimiters
         with open(file_path, 'w', encoding='utf-8') as f:
-            # Заголовок
+            # Header
             f.write(f"{'filename':<{max_filename_length}}")
             f.write('\t' + '\t'.join([f"{col:<{max_lengths[col]}}" for col in df.columns]) + '\n')
-            # Данные
+            # Data
             for index, row in df.iterrows():
                 f.write(f"{index:<{max_filename_length}}")
                 f.write('\t' + '\t'.join([f"{str(val):<{max_lengths[col]}}" for val, col in zip(row, df.columns)]) + '\n')
-        print(f"Файл сохранен по пути: {file_path}")
+        Logger.info(lang.get("logger.file_saved", file_path=file_path))
     else:
-        print("Сохранение отменено.")
+        Logger.info(lang.get("logger.file_saving_cancelled"))

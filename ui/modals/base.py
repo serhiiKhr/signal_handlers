@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from utils.language_manager import LanguageManager
+from utils.logger import Logger
 
 class BaseSettingsDialog:
     def __init__(self, data=None):
@@ -8,6 +10,7 @@ class BaseSettingsDialog:
         self.settings_win = None
         self._result = None
         self.data = data or {}
+        self.lang = LanguageManager()
 
     def open(self, parent):
         self.settings_win = tk.Toplevel(parent)
@@ -31,21 +34,25 @@ class BaseSettingsDialog:
         self.settings_win.destroy()
         
     def build_ui(self, win):
-        raise NotImplementedError("Метод build_ui должен быть переопределён в подклассе")
+        Logger.warning(self.lang.get('logger.must_be_overridden', method="build_ui"))
+        return
 
     def _save_and_close(self):
         self.collect_settings()
         self.settings_win.destroy()
 
     def collect_settings(self):
-        raise NotImplementedError("Метод collect_settings должен быть переопределён в подклассе")
+        Logger.warning(self.lang.get('logger.must_be_overridden', method="collect_settings"))
+        return
 
     def get_settings(self):
         return self._result
 
     def get_title(self):
-        return "Налаштування"
+        lang = LanguageManager()
+        return lang.get("ui.settings")
 
     def get_rows(self):
-        """Номер строки, на которой заканчивается build_ui, чтобы правильно разместить кнопку OK"""
-        raise NotImplementedError("Метод get_row должен быть переопределён в подклассе")
+        """The line number where build_ui ends, to correctly position the OK button."""
+        Logger.warning(self.lang.get('logger.must_be_overridden', method="get_row"))
+        return

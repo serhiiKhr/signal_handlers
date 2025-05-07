@@ -16,7 +16,8 @@ from .constants import MERA, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EXTENSION
 
 # utils
 from utils.helpers import get_filename_without_extension, group_by, find_index, deep_get, get_file_path, ensure_path_from_parts
-
+from utils.language_manager import LanguageManager
+from utils.logger import Logger
 class CachedData:
     @staticmethod
     def get_key(file_path: str, channel: str):
@@ -37,28 +38,23 @@ class JSONExecutor:
         self.settings = settings
         self.assign_ids(self.settings)
         
+        self.lang = LanguageManager()
         self.cached_data = {}
         self.processed_files = {}
-        self.logs = []
         
     def log_info(self, message): 
         if isinstance(message, list):
             for msg in message:
-                self.logs.append({'status': 'INFO', 'message': msg})
+                Logger.info(msg)
         else:
-            self.logs.append({'status': 'INFO', 'message': message})
-        
+            Logger.info(message)
+            
     def log_error(self, message): 
         if isinstance(message, list):
             for msg in message:
-                self.logs.append({'status': 'ERROR', 'message': msg})
+                Logger.error(msg)
         else:
-            self.logs.append({'status': 'ERROR', 'message': message})
-        
-    def show_errors(self):
-        for log in self.logs:
-            if log['status'] == 'ERROR':
-                print(log)
+            Logger.error(message)
         
     def read_mera_file(self, file_path: str, channel: str):
         reader = MeraReader(filepath=file_path)
@@ -77,7 +73,7 @@ class JSONExecutor:
             if source_program == MERA.id:
                 data, sampling_rate = self.read_mera_file(file_path=file_path, channel=channel)
             else:
-                self.log_error(message=f"Неизвестная программа источника: {source_program}")
+                self.log_error(message=self.lang.get("logger.unknown_source_program", source_program=source_program))
                 return None
             
             self.cached_data[key] = CachedData(
@@ -88,7 +84,7 @@ class JSONExecutor:
                 sampling_rate=sampling_rate
             )
         else:
-            self.log_info(message=f"Файл {file_path}, канал {channel} взят из кеша")
+            self.log_info(message=self.lang.get("logger.file_from_cache", file_path=file_path, channel=channel))
             
         return self.cached_data[key]
 
@@ -112,13 +108,14 @@ class JSONExecutor:
                 source_program = settings["source_program"]     
                 
                 if not source_program:
-                    self.log_error(message=f"source_program обязательны. Ошибка в файле: {file_settings}")
-                    raise ValueError("source_program обязателен")
+                    
+                    self.log_error(message=self.lang.get("logger.field_required_error", field='source_program', file_settings=file_settings))
+                    return
                 
                 # Checking mandatory parameters
                 if not file_path:
-                    self.log_error(message=f"file_path обязательны. Ошибка в файле: {file_settings}")
-                    raise  ValueError("file_path обязательны")
+                    self.log_error(message=self.lang.get("logger.field_required_error", field='file_path', file_settings=file_settings))
+                    return
                 
                 if len(time_frames) > 0:
                     for tf in time_frames:
@@ -197,7 +194,7 @@ class JSONExecutor:
                         'id': id
                     }
             else:
-                self.log_error(message=f"Метод обработки {method_name} не реализован.")
+                self.log_error(message=self.lang.get("logger.method_not_implemented", method_name=method_name))
         
     def get_results(self):
         return self.processed_files
@@ -224,12 +221,18 @@ class JSONExecutor:
         
         renderer.set_title(f"{file_name} ({channel})")
         y_units = reader.get_y_units(channel=channel)
-        renderer.set_ylabel(f'Амплитуда {"(" + y_units + ')' if y_units else ""}')
-        renderer.set_xlabel('Частота (Гц)')
-        renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} Гц).\nНа {int(minutes)} мин {int(seconds):02d} сек")
+        y_label_text = self.lang.get("ui.amplitude")
+        y_label_text += f"({y_units})" if y_units else ""    
+        renderer.set_ylabel(y_label_text)
+        
+        hz = self.lang.get("ui.hz")
+        x_label_text = f"{self.lang.get("ui.frequency")} ({self.lang.get("ui.hz")})"
+        renderer.set_xlabel(x_label_text)
+        formatted_time = self.lang.get("plot.formatted_time", min=f"{int(minutes)}", sec=f"{int(seconds):02d}")
+        renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} {hz}).\n{formatted_time}")
         renderer.set_xlim((freq_frame[0], freq_frame[1]))
         renderer.set_ylim((0, max_y * 1.3))
-        summary = f"{max_y:.2f} {y_units if y_units else ''}, {max_x:.2f} Гц"
+        summary = f"{max_y:.2f} {y_units if y_units else ''}, {max_x:.2f} {hz}"
         
         return renderer, summary
         
@@ -260,7 +263,8 @@ class JSONExecutor:
                             if ch_result_index >= 0:
                                 grouped_channels.append(groupped[method_name][id][ch_result_index]['renderer'])
                             else:
-                                self.log_error(f"Нет канала {ch} в списке результатов вычисления")
+                                
+                                self.log_error(self.lang.get("logger.no_channel_in_computation_results", channel=ch))
                                                         
                         valid_path = ensure_path_from_parts(path_arr)
                         group_file_name = "_".join(channel_group)
@@ -296,11 +300,11 @@ class JSONExecutor:
         global_method = settings.get('method')
 
         if not isinstance(global_method, dict) or 'name' not in global_method:
-            log("Глобальные настройки 'method' должны содержать параметр 'name'.")
+            log(self.lang.get("logger.global_settings_error", method="method", name="name"))
 
         files = settings.get('files')
         if not isinstance(files, list):
-            log("'files' должен быть списком.")
+            log(self.lang.get("logger.must_be_list", prop_name="files"))
             return errors
 
         # Check for 'groups_settings'
@@ -308,46 +312,46 @@ class JSONExecutor:
         if 'groups' in groups_settings:
             groups = groups_settings['groups']
             if not isinstance(groups, list):
-                log("'groups' должен быть списком.")
+                log(self.lang.get("logger.must_be_list", prop_name="groups"))
             else:
                 for i, group in enumerate(groups):
                     if not isinstance(group, list):
-                        log(f"'groups[{i}]' должно быть списком.")
+                        log(self.lang.get("logger.must_be_list", prop_name=f"groups[{i}]"))
                     else:
                         for ch in group:
                             if not isinstance(ch, str):
-                                log(f"В 'groups[{i}]' все элементы должны быть строками (каналами).")
+                                log(self.lang.get("logger.all_elements_must_be_strings", prop_name=f"groups[{i}]"))
         if 'single_image_group' in groups_settings and not isinstance(groups_settings['single_image_group'], bool):
-            log("'single_image_group' должен быть булевым значением.")
+            log(self.lang.get("logger.prop_must_be_boolean", prop_name="single_image_group"))
 
         for i, file in enumerate(files):
             file_path = file.get('file_path')
             if not file_path:
-                log(f"[Файл {i}] Отсутствует обязательный параметр 'file_path'.")
+                log(self.lang.get("logger.missing_file_path", file_index=i))
 
             method = file.get('method', global_method)
             if not method or not isinstance(method, dict) or 'name' not in method:
-                log(f"[Файл {i}] Настройки 'method' отсутствуют или не содержат обязательный параметр 'name'.")
+                log(self.lang.get("logger.missing_method_name", file_index=i))
 
             channels = file.get('channels', global_channels)
             if not channels:
-                log(f"[Файл {i}] Не указаны каналы: ни в файле, ни глобально.")
+                log(self.lang.get("logger.missing_channels", file_index=i))
 
             source_program = file.get('source_program', global_source_program)
             if not source_program:
-                log(f"[Файл {i}] Не указан 'source_program': ни в файле, ни глобально.")
+                log(self.lang.get("logger.missing_source_program", file_index=i))
 
             time_frames = file.get('time_frames', [])
             if not isinstance(time_frames, list):
-                log(f"[Файл {i}] 'time_frames' должен быть списком.")
+                log(self.lang.get("logger.missing_time_frames_list", file_index=i))
             else:
                 for j, frame in enumerate(time_frames):
                     if not isinstance(frame, dict):
-                        log(f"[Файл {i}] time_frames[{j}] должен быть словарём.")
+                        log(self.lang.get("logger.time_frames_not_dict", file_index=i, time_frame_index=j))
                         continue
                     for field in ['name', 'start_time', 'end_time']:
                         if field not in frame:
-                            log(f"[Файл {i}] time_frames[{j}] отсутствует обязательное поле '{field}'.")
+                            log(self.lang.get("logger.missing_field_in_time_frame", file_index=i, time_frame_index=j, field=field))
 
         return errors
     
@@ -380,7 +384,7 @@ class JSONExecutor:
                     "source_program": file_settings.get("source_program", global_settings["source_program"]),
                 }
 
-        self.log_error(f"ID '{target_id}' не найден в файлах или time_frames")
+        self.log_error(self.lang.get("logger.target_id_not_found", target_id=target_id))
         return None
     
     def get_timeframe_settings_by_id(self, settings: dict, target_id: str):

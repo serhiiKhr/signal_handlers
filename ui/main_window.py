@@ -12,6 +12,7 @@ from utils.constants import FREQ_FRAMES, SOURCE_PROGRAMS
 from utils.csv_creator import save_data_to_csv
 from utils.execute_json import JSONExecutor
 from utils.language_manager import LanguageManager
+from utils.logger import Logger
 
 from .modals import STFTSettings
 
@@ -48,8 +49,7 @@ class MainWindow:
                     executor.run()
                 
             except Exception as e:
-                print(f"Ошибка при чтении файла: {e}")
-        
+                Logger.error(self.lang.get("logger.file_read_error", error=e))        
 
     def build_ui(self):
         frm = ttk.Frame(self.root, padding=10)
@@ -169,7 +169,8 @@ class MainWindow:
                     'name': 'stft'
                 }
         else:
-            raise ValueError(f"Невідомий метод: {analys}")
+            Logger.warning(self.lang.get("logger.unknown_method", method=analys))
+            return
     
     def get_default_settings(self, analys):
         if analys == getattr(STFT, 'label', __name__):
@@ -179,10 +180,10 @@ class MainWindow:
                 **settings,
                 'name': 'stft'
             }
-            print('self.method_settings ==>', self.method_settings)
+            Logger.debug(f'self.method_settings: {self.method_settings}')
         else:
-            raise ValueError(f"Невідомий метод: {analys}")
-            
+            Logger.warning(self.lang.get("logger.unknown_method", method=analys))
+            return            
         
     def load_file(self, reader):
         self.file_path = reader.load()
@@ -280,12 +281,18 @@ class MainWindow:
             
             renderer.set_title(f"{file_name} ({channel})")
             y_units = self.reader_instance.get_y_units(channel=channel)
-            renderer.set_ylabel(f'Амплитуда {"(" + y_units + ')' if y_units else ""}')
-            renderer.set_xlabel('Частота (Гц)')
-            renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} Гц).\nНа {int(minutes)} мин {int(seconds):02d} сек")
+            y_label_text = self.lang.get("ui.amplitude")
+            y_label_text += f"({y_units})" if y_units else ""
+            
+            renderer.set_ylabel(y_label_text)
+            x_label_text = f"{self.lang.get("ui.frequency")} ({self.lang.get("ui.hz")})"
+            hz = self.lang.get("ui.hz")
+            renderer.set_xlabel(x_label_text)
+            formatted_time = self.lang.get("plot.formatted_time", min=f"{int(minutes)}", sec=f"{int(seconds):02d}")
+            renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} {hz}).\n{formatted_time}")
             renderer.set_xlim((FREQ_FRAMES['MIN'], FREQ_FRAMES['MAX']))
             renderer.set_ylim((0, max_y * 1.3))
-            data_row[channel] = f"{max_y:.2f} {y_units if y_units else ''}, {max_x:.2f} Гц"
+            data_row[channel] = f"{max_y:.2f} {y_units if y_units else ''}, {max_x:.2f} {hz}"
             
             plots.append(renderer)
             # renderer.show()

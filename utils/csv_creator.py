@@ -1,7 +1,12 @@
 import pandas as pd
 
+from utils.language_manager import LanguageManager
+from utils.logger import Logger
+
 def save_data_to_csv(file_path, datarows):
     df = pd.DataFrame(datarows).set_index('filename')
+    
+    lang = LanguageManager()
     
     # Aligning the "filename" column by width
     max_filename_length = max(df.index.str.len())  # Find the maximum length of the filename
@@ -21,6 +26,6 @@ def save_data_to_csv(file_path, datarows):
             for index, row in df.iterrows():
                 f.write(f"{index:<{max_filename_length}}")
                 f.write('\t' + '\t'.join([f"{str(val):<{max_lengths[col]}}" for val, col in zip(row, df.columns)]) + '\n')
-        print(f"Файл сохранен по пути: {file_path}")
+        Logger.info(lang.get("logger.file_saved", file_path=file_path))
     else:
-        print("Сохранение отменено.")
+        Logger.info(lang.get("logger.file_saving_cancelled"))

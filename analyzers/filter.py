@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import butter, filtfilt
 from abc import ABC, abstractmethod
+from utils import Logger, LanguageManager
 
 from .base import BaseAnalyzer
 
@@ -37,7 +38,9 @@ class Filter(BaseAnalyzer):
     def analyze(self, signal, **kwargs):
         sampling_rate = kwargs.get('sampling_rate')
         if sampling_rate is None:
-            raise ValueError("sampling_rate is required")
+            lang = LanguageManager()
+            Logger.error(lang.get("logger.field_required", field="sampling_rate"))
+            return None
         
         filtered = self._butter_filter(signal, sampling_rate)
         return filtered

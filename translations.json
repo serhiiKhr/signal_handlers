@@ -9,7 +9,8 @@
       "min_freq": "Мінімальна частота [Hz]:",
       "max_freq": "Максимальна частота [Hz]:",
       "overlap_percent": "Відсоток перекриття [%]:",
-      "min_display_freq": "Мін. відображ. частота [Hz]:"
+      "min_display_freq": "Мін. відображ. частота [Hz]:",
+      "stft_missing_required_parameters": "Відсутні обов'язкові параметри: key, time_frames, method_settings, channel, data або sampling_rate."
       },
     "dewesoft": {
       "label": "Dewesoft файл ({extensions})"
@@ -93,7 +94,8 @@
       "min_freq": "Минимальная частота [Гц]:",
       "max_freq": "Максимальная частота [Гц]:",
       "overlap_percent": "Процент перекрытия [%]:",
-      "min_display_freq": "Мин. отображ. частота [Гц]:"
+      "min_display_freq": "Мин. отображ. частота [Гц]:",
+      "stft_missing_required_parameters": "Отсутствуют обязательные параметры: key, time_frames, method_settings, channel, data или sampling_rate."
     },
     "dewesoft": {
       "label": "Файл Dewesoft ({extensions})"
@@ -175,7 +177,8 @@
       "min_freq": "Minimum frequency [Hz]:",
       "max_freq": "Maximum frequency [Hz]:",
       "overlap_percent": "Overlap percentage [%]:",
-      "min_display_freq": "Min. display frequency [Hz]:"
+      "min_display_freq": "Min. display frequency [Hz]:",
+      "stft_missing_required_parameters": "Missing required parameters: key, time_frames, method_settings, channel, data or sampling_rate."
     },
     "dewesoft": {
       "label": "Dewesoft file ({extensions})"

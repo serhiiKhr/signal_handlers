@@ -1,12 +1,10 @@
-
-import numpy 
 import uuid
 
 # readers
-from readers import MeraReader, BaseReader
+from readers import MeraReader
 
 # utils
-from utils.helpers import get_filename_without_extension, group_by, find_index, deep_get, get_file_path, ensure_path_from_parts
+from utils.helpers import deep_get
 
 from utils.language_manager import LanguageManager
 from utils.logger import Logger
@@ -15,10 +13,6 @@ from utils.constants import MERA, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EXTENSION
 
 from .cached_data import CachedData
 from .methods_handlers import BaseHandler, STFTHandler
-
-
-
-
 
 class SignalEngine:
     def __init__(self, settings):
@@ -43,7 +37,7 @@ class SignalEngine:
         else:
             Logger.error(message)
             
-    def file_handle(self, source_program: str, file_path: str, channel: str):
+    def read_file(self, source_program: str, file_path: str, channel: str):
         if source_program == MERA.id:
             'MERA file reader'
             reader = MeraReader(filepath=file_path)
@@ -58,7 +52,7 @@ class SignalEngine:
         key = CachedData.get_key(file_path=file_path, channel=channel)
          
         if key not in self.cached_data:
-            data, sampling_rate = self.file_handle(source_program=source_program, file_path=file_path, channel=channel)
+            data, sampling_rate = self.read_file(source_program=source_program, file_path=file_path, channel=channel)
 
             if data is None or sampling_rate is None:
                 return
@@ -75,90 +69,54 @@ class SignalEngine:
             
         return self.cached_data[key]
     
-    def execute(self):
+    def start(self):
+        # handle file => id, settings
+        
+        # validation
         errors = self.validate_settings_obj(self.settings)
         if len(errors) > 0:
             self.log_error(errors)
             return
         
         try:
-            baseHandler = BaseHandler()
+            # get files_settings
             files_settings = self.settings.get('files', [])
+            # get file_settings
             for file_settings in files_settings:
+                # get setting id
                 id = file_settings['id']
-               
-                settings = baseHandler.get_settings_by_id(settings=self.settings, target_id=id)
-                if not settings:
-                    return
-                
-                file_path = deep_get(settings, ["file_path"], '') 
-                time_frames = deep_get(settings, ["time_frames"], []) 
-                channels = deep_get(settings, ["channels"], []) 
-                method = deep_get(settings, ["method"], '') 
-                source_program = deep_get(settings, ["source_program"], '') 
-                
-                if not source_program:
-                    self.log_error(message=self.lang.get("logger.field_required_error", field='source_program', file_settings=file_settings))
-                    return
-                
-                # Checking mandatory parameters
-                if not file_path:
-                    self.log_error(message=self.lang.get("logger.field_required_error", field='file_path', file_settings=file_settings))
-                    return
-                
-                
-                
-                self.handle_file(
-                    source_program=source_program,
-                    id=id,
-                    file_path=file_path,
-                    channels=channels,
-                    time_frames=time_frames,
-                    method=method
-                )
+                self.handle_file(id=id, settings=self.settings)
                 
         except Exception as e:
             self.log_error(message=str(e))
             
-            
-    def handle_file(
-        self, 
-        *,
-        source_program,
-        id,
-        file_path,
-        channels,
-        time_frames,
-        method    
-    ):
-        method_name = method['name']
+    def handle_file(self, id: str = '', settings: dict = None):
+        baseHandler = BaseHandler()
+        # get settings by id
+        file_settings = baseHandler.get_settings_by_id(settings=settings, target_id=id)
+        # get file path 
+        file_path = deep_get(file_settings, ['file_path'], '')
+        source_program = deep_get(file_settings, ['source_program'], '')
+        channels = deep_get(file_settings, ['channels'], [])
         
-        if method_name not in self.handled_files:
-            self.handled_files[method_name] = {}
-            
+        cached_data = {}
+        # cache data from file
         for channel in channels:
-            cached = self.read_and_cache(file_path=file_path, channel=channel, source_program=source_program)
-            if cached is None:
-                continue
-            
-            data = cached.data
-            sampling_rate = cached.sampling_rate
-            
-            key = f"{id}___{channel}"
-            if method_name == 'stft':
-                handler = STFTHandler(
-                    key=key, 
-                    time_frames=time_frames,
-                    method_settings=method,
-                    channel=channel,
-                    data=data,
-                    sampling_rate=sampling_rate
-                )
-                handler.render_graphs(store_to=self.handled_files[method_name])
-            else:
-                self.log_error(message=self.lang.get("logger.method_not_implemented", method_name=method_name))
-            
-    
+            cached_data[channel] = self.read_and_cache(file_path=file_path, channel=channel, source_program=source_program)
+        # now data are cached
+        
+        # get handle method name
+        method_name = deep_get(file_settings, ['method', 'name'], '')
+        if method_name == 'stft':
+            handler = STFTHandler(id=id, settings=settings)
+            handler.run(signals=cached_data)
+            handler.render_graphs()    
+        else:
+            self.log_error(message=self.lang.get("logger.method_not_implemented", method_name=method_name))
+            return
+        
+        # handle it
+        
     def validate_settings_obj(self, settings):
         errors = []
 
@@ -224,8 +182,8 @@ class SignalEngine:
                             log(self.lang.get("logger.missing_field_in_time_frame", file_index=i, time_frame_index=j, field=field))
 
         return errors
-    
-    def generate_settings_obj(self):
+    @staticmethod
+    def generate_settings_obj():
         return {}
     
     def assign_ids(self, settings: dict) -> None:

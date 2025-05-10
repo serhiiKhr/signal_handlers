@@ -1,15 +1,11 @@
 import uuid
-
-# readers
-from readers import MeraReader
+import traceback
 
 # utils
 from utils.helpers import deep_get
 
 from utils.language_manager import LanguageManager
 from utils.logger import Logger
-# constants
-from utils.constants import MERA, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EXTENSION
 
 from .cached_data import CachedData
 from .methods_handlers import BaseHandler, STFTHandler
@@ -38,13 +34,13 @@ class SignalEngine:
             Logger.error(message)
             
     def read_file(self, source_program: str, file_path: str, channel: str):
-        if source_program == MERA.id:
-            'MERA file reader'
-            reader = MeraReader(filepath=file_path)
+        try:
+            reader = BaseHandler.get_file_reader(file_path=file_path, source_program=source_program)
             sampling_rate = reader.get_sampling_rate(channel)
             data = reader.read_channel(channel)
             return data, sampling_rate
-        else:
+        except Exception as e:
+            self.log_error(message=str(e))
             self.log_error(message=self.lang.get("logger.unknown_source_program", source_program=source_program))
             return None, None
         
@@ -70,8 +66,6 @@ class SignalEngine:
         return self.cached_data[key]
     
     def start(self):
-        # handle file => id, settings
-        
         # validation
         errors = self.validate_settings_obj(self.settings)
         if len(errors) > 0:
@@ -81,6 +75,7 @@ class SignalEngine:
         try:
             # get files_settings
             files_settings = self.settings.get('files', [])
+            print('files_settings', files_settings)
             # get file_settings
             for file_settings in files_settings:
                 # get setting id
@@ -89,6 +84,7 @@ class SignalEngine:
                 
         except Exception as e:
             self.log_error(message=str(e))
+            traceback.format_exc()
             
     def handle_file(self, id: str = '', settings: dict = None):
         baseHandler = BaseHandler()
@@ -108,14 +104,13 @@ class SignalEngine:
         # get handle method name
         method_name = deep_get(file_settings, ['method', 'name'], '')
         if method_name == 'stft':
+            # handle it
             handler = STFTHandler(id=id, settings=settings)
             handler.run(signals=cached_data)
             handler.render_graphs()    
         else:
             self.log_error(message=self.lang.get("logger.method_not_implemented", method_name=method_name))
             return
-        
-        # handle it
         
     def validate_settings_obj(self, settings):
         errors = []
@@ -182,6 +177,7 @@ class SignalEngine:
                             log(self.lang.get("logger.missing_field_in_time_frame", file_index=i, time_frame_index=j, field=field))
 
         return errors
+    
     @staticmethod
     def generate_settings_obj():
         return {}

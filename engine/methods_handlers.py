@@ -13,11 +13,23 @@ from analyzers import STFT, BaseAnalyzer
 from readers import MeraReader, DWReader, BaseReader
 
 # constants
-from utils.constants import MERA, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EXTENSION
+from utils.constants import MERA, DEWESOFT, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EXTENSION
 
 class BaseHandler:
     def __init__(self):
         self.lang = LanguageManager()
+        
+    @staticmethod
+    def get_file_reader(source_program: str, file_path: str):
+        if source_program == MERA.id:
+            return MeraReader(filepath=file_path)
+        elif source_program == DEWESOFT.id:
+            return DWReader(filepath=file_path)
+        # NOTE: add file reader checking here
+        # elif source_program == DEWESOFT.id:
+        #     self.file_reader = DWReader(filepath=file_path)
+        else:
+            return BaseReader()
         
     def get_settings_by_id(self, settings: dict, target_id: str) -> dict:
     
@@ -70,11 +82,12 @@ class STFTHandler(BaseHandler):
     ):
         self.lang = LanguageManager()
         
-        
+        # validate during class instance creation
         if not id or settings is None:
             error = self.lang.get("stft.stft_missing_required_parameters")
             Logger.error(error)
             raise ValueError(error)
+        
         self.id = id
         self.settings = self.get_settings_by_id(settings=settings, target_id=self.id)
         
@@ -86,10 +99,7 @@ class STFTHandler(BaseHandler):
         
         self.analyzer = STFT(window=window, nperseg=nperseg)
         
-        if source_program == MERA.id:
-            self.file_reader = MeraReader(filepath=file_path)
-        else:
-            self.file_reader = BaseReader()
+        self.file_reader = BaseHandler.get_file_reader(source_program=source_program, file_path=file_path)
         
         self.results = []
         
@@ -98,17 +108,22 @@ class STFTHandler(BaseHandler):
         channels = deep_get(self.settings, ['channels'], [])
         time_frames = deep_get(self.settings, ['time_frames'], None)
         file_path = deep_get(self.settings, ['file_path'], '')
-        
        
         min_freq = deep_get(self.settings, ['method', 'min_freq'], FREQ_FRAMES['MIN'])
         max_freq = deep_get(self.settings, ['method', 'max_freq'], FREQ_FRAMES['MAX'])
-        min_display_freq = deep_get(self.settings, ['method', 'min_display_freq'], None)
-        
+        min_display_freq = deep_get(self.settings, ['method', 'min_display_freq'], None)    
         
         for channel in channels:
-            signal, sampling_rate = deep_get(signals, [channel], (None, None))
-            
-            if time_frames is not None and isinstance(time_frames, list):
+            channel_signal = deep_get(signals, [channel], (None, None))
+            if channel_signal:
+                signal = channel_signal.data
+                sampling_rate = channel_signal.sampling_rate
+            else:
+                # todo: add to i18n
+                Logger.error(f'no channel ({channel}) in signals')
+                return
+
+            if time_frames is not None and (isinstance(time_frames, list) and len(time_frames) > 0):
                 for time_frame in time_frames:
                     
                     sliced_data = self.file_reader.slice_signal(data=signal, sampling_rate=sampling_rate, start_time=time_frame['start_time'], end_time=time_frame['end_time'])
@@ -149,7 +164,6 @@ class STFTHandler(BaseHandler):
     def handle(self, file_path: str, channel: str, time_frame, freq_frame, result, min_display_freq):
         frequencies, times, amplitudes = result
         frequency, time, max_amplitudes = self.analyzer.find_peak_frequency_time(signal=result, min_frequency=min_display_freq)
-        reader: BaseReader =  MeraReader(filepath=file_path)
         
         file_name = get_filename_without_extension(file_path)
         
@@ -167,7 +181,7 @@ class STFTHandler(BaseHandler):
         renderer.set_peaks([{'x': max_x, 'y': max_y}])
         
         renderer.set_title(f"{file_name} ({channel})")
-        y_units = reader.get_y_units(channel=channel)
+        y_units = self.file_reader.get_y_units(channel=channel)
         y_label_text = self.lang.get("ui.amplitude")
         y_label_text += f"({y_units})" if y_units else ""    
         renderer.set_ylabel(y_label_text)
@@ -186,51 +200,59 @@ class STFTHandler(BaseHandler):
     def render_graphs(self):
         groupped = group_by(self.results, 'id')
         
-        for method_name in groupped:
-            for id in groupped[method_name]:
-                channel_groups = deep_get(self.settings, ['groups_settings', 'groups'], [])
-                single_image_group = deep_get(self.settings, ['groups_settings', 'single_image_group'], False)
+        for id in groupped.keys():
+            method_name = deep_get(self.settings, ['method', 'name'], '')
+            channel_groups = deep_get(self.settings, ['groups_settings', 'groups'], [])
+            single_image_group = deep_get(self.settings, ['groups_settings', 'single_image_group'], False)
+            
+            file_name = get_filename_without_extension(self.settings['file_path'])
+            
+            path_arr = []
+            output_path = deep_get(self.settings, ['output_path'], '')
+            if output_path:
+                path_arr.append(output_path)
                 
-                file_name = get_filename_without_extension(self.settings['file_path'])
-                path_arr = [self.settings['output_path'], method_name, file_name]
-                time_frames_name = deep_get(self.settings, ['time_frames', 0, 'name'], '')
+            path_arr.append(method_name)
+            path_arr.append(file_name)
+            
+            
+            time_frames_name = deep_get(self.settings, ['time_frames', 0, 'name'], '')
+            
+            if time_frames_name:
+                path_arr.append(time_frames_name)
                 
-                if time_frames_name:
-                    path_arr.append(time_frames_name)
-                    
-                if len(channel_groups) > 0:
-                    for channel_group in channel_groups:
-                        grouped_channels = []
-                        for i, ch in enumerate(channel_group):
-                            ch_result_index = find_index(groupped[method_name][id], lambda v: v['channel'] == ch)
-                            if ch_result_index >= 0:
-                                grouped_channels.append(groupped[method_name][id][ch_result_index]['renderer'])
-                            else:
-                                
-                                Logger.error(self.lang.get("logger.no_channel_in_computation_results", channel=ch))
-                                                        
-                        valid_path = ensure_path_from_parts(path_arr)
-                        group_file_name = "_".join(channel_group)
-                        
-                        
-                        if single_image_group:
-                            PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+            if len(channel_groups) > 0:
+                for channel_group in channel_groups:
+                    grouped_channels = []
+                    for i, ch in enumerate(channel_group):
+                        ch_result_index = find_index(groupped[id], lambda v: v['channel'] == ch)
+                        if ch_result_index >= 0:
+                            grouped_channels.append(groupped[id][ch_result_index]['renderer'])
                         else:
-                            PlotRenderer.save_multiply(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+                            Logger.error(self.lang.get("logger.no_channel_in_computation_results", channel=ch))
+                                                    
+                    valid_path = ensure_path_from_parts(path_arr)
+                    group_file_name = "_".join(channel_group)
+                    
+                    if single_image_group:
+                        PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+                    else:
+                        PlotRenderer.save_multiply(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
 
-                else:
-                    "save by one file"
-                    for result in groupped[method_name][id]:
+            else:
+                "save by one file"
+                for result in groupped[id]:
+                    
+                    renderer = result['renderer']
+                    channel = result['channel']
+                    
+                    if 'tf_id' in result:
+                        timeframe_settings = self.get_timeframe_settings_by_id(settings=self.settings, target_id=result['tf_id'])
+                        path_arr.append(timeframe_settings['name'])
                         
-                        renderer = result['renderer']
-                        channel = result['channel']
-                        
-                        if 'tf_id' in result:
-                            timeframe_settings = self.get_timeframe_settings_by_id(settings=self.settings, target_id=result['tf_id'])
-                            path_arr.append(timeframe_settings['name'])
-                            
-                        valid_path = ensure_path_from_parts(path_arr)
-                        renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}") 
+                    valid_path = ensure_path_from_parts(path_arr)
+                    renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}") 
+            
         
     
     

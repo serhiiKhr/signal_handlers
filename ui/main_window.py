@@ -8,7 +8,7 @@ import traceback
 from .plot_renderer import PlotRenderer
 
 from analyzers import STFT, Filter
-from utils.helpers import get_filename_without_extension
+from utils.helpers import get_filename_without_extension, get_file_path
 from utils.constants import FREQ_FRAMES, SOURCE_PROGRAMS
 from utils.csv_creator import save_data_to_csv
 from utils.language_manager import LanguageManager
@@ -154,7 +154,7 @@ class MainWindow:
     def toggle_stats_widgets(self):
         """Enable or disable fields depending on the checkbox state."""
         state = 'normal' if self.save_stats.get() else 'disabled'
-        self.stats_entry.configure(state=state)
+        # self.stats_entry.configure(state=state)
         self.stats_button.configure(state=state)
 
     def choose_stats_path(self):
@@ -220,21 +220,71 @@ class MainWindow:
         
         crop_enabled = self.crop_enabled.get()
         start_time = self.start_time_entry.get()
-        start_time = float(start_time) if start_time else start_time
         end_time = self.end_time_entry.get()
-        end_time = float(end_time) if end_time else end_time
+        
+        if crop_enabled:
+            if not start_time or not end_time:
+                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_missing"))
+                return
 
-        print('self.source_program =====>', self.source_program)
-        print('selected_channels =====>', selected_channels)
+            try:
+                start_time = float(start_time)
+                end_time = float(end_time)
+            except ValueError:
+                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_invalid"))
+                return
+
+            if end_time <= start_time:
+                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_order_error"))
+                return
+          
         settings = {}
+        # global settings
         settings['source_program'] = self.source_program
         settings['channels'] = selected_channels
+        settings['method'] = self.method_settings
         
-        
-       
-        
-     
+        file_settings = {
+            'file_path': self.file_path,
+            'time_frames': []
+        }
+        if crop_enabled:
+            file_settings['time_frames'].append({
+                'name': f"segment_{start_time:.2f}_to_{end_time:.2f}s",
+                'start_time': start_time,
+                'end_time': end_time
+            })
+            
+        settings['files'] = [file_settings]
+         
+        save_stats = self.save_stats.get()
+        if save_stats:
+            output_file_path = self.stats_path.get()
+            settings['stats_settings'] = {
+                "save_stats": save_stats,
+                "output_file_path": output_file_path or get_file_path(self.file_path)
+            }
 
+        executor = SignalEngine(settings=settings)
+        
+        # executor = JSONExecutor(settings=execute_settings)
+        executor.start()
 
     def run(self):
         self.root.mainloop()
+        
+        
+        
+{
+    'source_program': ('dewesoft',), 
+    'channels': (['AI A-1', 'AI A-4'],), 
+    'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'min_display_freq': 100, 'name': 'stft'}, 
+    'files': [
+        {
+            'file_path': 'C:/Users/user/Desktop/13 11.06/ст.13_452_20240611_103211.dxd', 
+            'time_frames': [
+                {'name': 'test', 'start_time': 0, 'end_time': 1}
+            ]
+        }
+    ]
+}

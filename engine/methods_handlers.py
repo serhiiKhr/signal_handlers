@@ -2,7 +2,8 @@ import numpy
 
 from utils.language_manager import LanguageManager
 from utils.logger import Logger
-from utils.helpers import get_file_path, get_filename_without_extension, group_by, deep_get, find_index, ensure_path_from_parts
+from utils.helpers import get_file_path, get_filename_without_extension, group_by, deep_get, find_index, ensure_path_from_parts, get_file_path
+from utils.csv_creator import save_data_to_csv
 
 from ui.plot_renderer import PlotRenderer
 
@@ -18,6 +19,9 @@ from utils.constants import MERA, DEWESOFT, FREQ_FRAMES, WINDOWS, DEFAULT_IMG_EX
 class BaseHandler:
     def __init__(self):
         self.lang = LanguageManager()
+        self.results = []
+        self.settings = {}
+        self.summary = {}
         
     @staticmethod
     def get_file_reader(source_program: str, file_path: str):
@@ -30,6 +34,9 @@ class BaseHandler:
         #     self.file_reader = DWReader(filepath=file_path)
         else:
             return BaseReader()
+    
+    def get_summary(self):
+        return self.summary
         
     def get_settings_by_id(self, settings: dict, target_id: str) -> dict:
     
@@ -38,7 +45,10 @@ class BaseHandler:
             "channels": settings.get("channels"),
             "groups_settings": settings.get("groups_settings"),
             "method": settings.get("method"),
-            "source_program": settings.get("source_program")
+            "source_program": settings.get("source_program"),
+            "show_graph": settings.get("show_graph", False),
+            "save_stats": deep_get(settings, ['stats_settings', 'save_stats'], False),
+            "output_file_path": deep_get(settings, ['stats_settings', 'output_file_path'], '')
         }        
 
         for file_settings in settings.get("files", []):
@@ -48,6 +58,8 @@ class BaseHandler:
             # Check the ID of the file
             if file_id == target_id:
                 output_path = file_settings.get("output_path", global_settings["output_path"])
+                stats_settings = file_settings.get('stats_settings', {})
+                stats_output_file_path = stats_settings.get('output_file_path', '')
                 if not output_path:
                     output_path = get_file_path(file_settings.get("file_path"))
                 return {
@@ -58,6 +70,10 @@ class BaseHandler:
                     "groups_settings": file_settings.get("groups_settings", global_settings["groups_settings"]),
                     "method": file_settings.get("method", global_settings["method"]),
                     "source_program": file_settings.get("source_program", global_settings["source_program"]),
+                    "show_graph": global_settings["show_graph"] if 'show_graph' not in stats_settings else stats_settings.get("show_graph"),
+                    "save_stats": global_settings["save_stats"] if 'save_stats' not in stats_settings else stats_settings.get("save_stats"),
+                    "output_file_path": stats_output_file_path or global_settings['output_file_path'] or get_file_path(file_path),
+                    
                 }
 
         Logger.error(self.lang.get("logger.target_id_not_found", target_id=target_id))
@@ -80,7 +96,7 @@ class STFTHandler(BaseHandler):
         id: str = '',
         settings: dict = None
     ):
-        self.lang = LanguageManager()
+        super().__init__()
         
         # validate during class instance creation
         if not id or settings is None:
@@ -101,18 +117,25 @@ class STFTHandler(BaseHandler):
         
         self.file_reader = BaseHandler.get_file_reader(source_program=source_program, file_path=file_path)
         
-        self.results = []
+        
         
     def run(self, signals=None):
         
         channels = deep_get(self.settings, ['channels'], [])
         time_frames = deep_get(self.settings, ['time_frames'], None)
         file_path = deep_get(self.settings, ['file_path'], '')
+        source_program = deep_get(self.settings, ['source_program'], '')
+        file_name = get_filename_without_extension(file_path)
        
         min_freq = deep_get(self.settings, ['method', 'min_freq'], FREQ_FRAMES['MIN'])
         max_freq = deep_get(self.settings, ['method', 'max_freq'], FREQ_FRAMES['MAX'])
-        min_display_freq = deep_get(self.settings, ['method', 'min_display_freq'], None)    
+        min_display_freq = deep_get(self.settings, ['method', 'min_display_freq'], None)
         
+        save_stats = deep_get(self.settings, ['save_stats'], False)
+        output_file_path = deep_get(self.settings, ['output_file_path'], '')
+        
+        self.file_reader = BaseHandler.get_file_reader(source_program=source_program, file_path=file_path)    
+            
         for channel in channels:
             channel_signal = deep_get(signals, [channel], (None, None))
             if channel_signal:
@@ -144,6 +167,13 @@ class STFTHandler(BaseHandler):
                         'id': self.id,
                         'tf_id': time_frame['id']
                     })
+                    summare_name = f"{file_name} {time_frame['name']}"
+                    if summare_name not in self.summary:
+                        self.summary[summare_name] = {}
+                        self.summary[summare_name]['save_stats'] = save_stats
+                        self.summary[summare_name]['output_file_path'] = output_file_path
+                        self.summary[summare_name]['channels'] = []
+                    self.summary[summare_name]['channels'].append({'channel': channel, 'summary': summary})
             else:
                 result = self.analyzer.analyze(signal=signal, sampling_rate=sampling_rate, min_freq=min_freq, max_freq=max_freq)
                 renderer, summary = self.handle(
@@ -160,6 +190,13 @@ class STFTHandler(BaseHandler):
                     'channel': channel,
                     'id': self.id
                 })
+                summare_name = f"{file_name}"
+                if summare_name not in self.summary:
+                    self.summary[summare_name] = {}
+                    self.summary[summare_name]['save_stats'] = save_stats
+                    self.summary[summare_name]['output_file_path'] = output_file_path
+                    self.summary[summare_name]['channels'] = []
+                self.summary[summare_name]['channels'].append({'channel': channel, 'summary': summary})
         
     def handle(self, file_path: str, channel: str, time_frame, freq_frame, result, min_display_freq):
         frequencies, times, amplitudes = result
@@ -193,7 +230,7 @@ class STFTHandler(BaseHandler):
         renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} {hz}).\n{formatted_time}")
         renderer.set_xlim((freq_frame[0], freq_frame[1]))
         renderer.set_ylim((0, max_y * 1.3))
-        summary = f"{max_y:.2f} {y_units if y_units else ''}, {max_x:.2f} {hz}"
+        summary = f"{max_y:.2f}{' ' + y_units if y_units else ''}, {max_x:.2f} {hz}"
         
         return renderer, summary
     

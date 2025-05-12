@@ -5,6 +5,7 @@ from utils.logger import Logger
 
 def save_data_to_csv(file_path, datarows):
     df = pd.DataFrame(datarows).set_index('filename')
+    df = df.fillna('')
     
     lang = LanguageManager()
     

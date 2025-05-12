@@ -1,8 +1,10 @@
 import uuid
 import traceback
+from datetime import datetime
 
 # utils
-from utils.helpers import deep_get
+from utils.helpers import deep_get, group_by
+from utils.csv_creator import save_data_to_csv
 
 from utils.language_manager import LanguageManager
 from utils.logger import Logger
@@ -18,6 +20,7 @@ class SignalEngine:
         self.lang = LanguageManager()
         self.cached_data = {}
         self.handled_files = {}
+        self.summary = {}
         
     def log_info(self, message): 
         if isinstance(message, list):
@@ -82,6 +85,8 @@ class SignalEngine:
                 id = file_settings['id']
                 self.handle_file(id=id, settings=self.settings)
                 
+            self.log_results_to_csv()
+                
         except Exception as e:
             self.log_error(message=str(e))
             traceback.format_exc()
@@ -107,7 +112,8 @@ class SignalEngine:
             # handle it
             handler = STFTHandler(id=id, settings=settings)
             handler.run(signals=cached_data)
-            handler.render_graphs()    
+            handler.render_graphs()
+            self.summary = {**self.summary, **handler.get_summary()}
         else:
             self.log_error(message=self.lang.get("logger.method_not_implemented", method_name=method_name))
             return
@@ -121,6 +127,10 @@ class SignalEngine:
         global_channels = settings.get('channels')
         global_source_program = settings.get('source_program')
         global_method = settings.get('method')
+        global_show_graph = settings.get('show_graph')
+
+        if global_show_graph is not None and not isinstance(global_show_graph, bool):
+            log(self.lang.get("logger.prop_must_be_boolean", prop_name="show_graph"))
 
         if not isinstance(global_method, dict) or 'name' not in global_method:
             log(self.lang.get("logger.global_settings_error", method="method", name="name"))
@@ -130,7 +140,7 @@ class SignalEngine:
             log(self.lang.get("logger.must_be_list", prop_name="files"))
             return errors
 
-        # Check for 'groups_settings'
+        # groups_settings
         groups_settings = settings.get('groups_settings', {})
         if 'groups' in groups_settings:
             groups = groups_settings['groups']
@@ -144,8 +154,20 @@ class SignalEngine:
                         for ch in group:
                             if not isinstance(ch, str):
                                 log(self.lang.get("logger.all_elements_must_be_strings", prop_name=f"groups[{i}]"))
+
         if 'single_image_group' in groups_settings and not isinstance(groups_settings['single_image_group'], bool):
             log(self.lang.get("logger.prop_must_be_boolean", prop_name="single_image_group"))
+
+        # stats_settings
+        stats_settings = settings.get('stats_settings')
+        if stats_settings is not None:
+            if not isinstance(stats_settings, dict):
+                log(self.lang.get("logger.must_be_dict", prop_name="stats_settings"))
+            else:
+                if 'save_stats' in stats_settings and not isinstance(stats_settings['save_stats'], bool):
+                    log(self.lang.get("logger.prop_must_be_boolean", prop_name="stats_settings.save_stats"))
+                if 'output_file_path' in stats_settings and not isinstance(stats_settings['output_file_path'], str):
+                    log(self.lang.get("logger.prop_must_be_string", prop_name="stats_settings.output_file_path"))
 
         for i, file in enumerate(files):
             file_path = file.get('file_path')
@@ -164,6 +186,10 @@ class SignalEngine:
             if not source_program:
                 log(self.lang.get("logger.missing_source_program", file_index=i))
 
+            show_graph = file.get('show_graph', global_show_graph)
+            if show_graph is not None and not isinstance(show_graph, bool):
+                log(self.lang.get("logger.prop_must_be_boolean", prop_name=f"files[{i}].show_graph"))
+
             time_frames = file.get('time_frames', [])
             if not isinstance(time_frames, list):
                 log(self.lang.get("logger.missing_time_frames_list", file_index=i))
@@ -181,6 +207,30 @@ class SignalEngine:
     @staticmethod
     def generate_settings_obj():
         return {}
+    
+    def log_results_to_csv(self):
+        print('self.summary', self.summary)
+        datarow = []
+        for key in self.summary.keys():
+            if not self.summary[key]['save_stats']:
+                continue
+            
+            data = {
+                'filename': key,
+                'output_file_path': self.summary[key]['output_file_path']
+            }
+            for ch in self.summary[key]['channels']:
+                data[ch['channel']] = ch['summary']
+            datarow.append(data)
+            
+        groupped = group_by(datarow, 'output_file_path')
+        for path in groupped.keys():
+            output_file_path = groupped[key]['output_file_path']
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # data = 
+            save_data_to_csv(f"{output_file_path}\\{timestamp}.csv", groupped[key])
+        print('groupped', groupped)
+        
     
     def assign_ids(self, settings: dict) -> None:
         for file_settings in settings.get("files", []):

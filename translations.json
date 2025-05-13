@@ -9,7 +9,8 @@
       "min_freq": "Мінімальна частота [Hz]:",
       "max_freq": "Максимальна частота [Hz]:",
       "overlap_percent": "Відсоток перекриття [%]:",
-      "min_display_freq": "Мін. відображ. частота [Hz]:"
+      "min_display_freq": "Мін. відображ. частота [Hz]:",
+      "stft_missing_required_parameters": "Відсутні обов'язкові параметри: id, settings."
       },
     "dewesoft": {
       "label": "Dewesoft файл ({extensions})"
@@ -42,7 +43,11 @@
       "amplitude": "Амплітуда",
     
       "max": "Максимум",
-      "hz": "Гц"
+      "hz": "Гц",
+      "crop_time_missing": "Початковий і кінцевий час мають бути вказані, якщо обрізка увімкнена.",
+      "crop_time_invalid": "Початковий і кінцевий час мають бути коректними числами.",
+      "crop_time_order_error": "Кінцевий час має бути більшим за початковий.",
+      "show_result_graphs": "Показати отримані графіки"
     },
     "plot": {
       "title": "Графік",
@@ -79,8 +84,9 @@
       "missing_time_frames_list": "[Файл {file_index}] 'time_frames' повинно бути списком.",
       "time_frames_not_dict": "[Файл {file_index}] time_frames[{time_frame_index}] повинно бути словником.",
       "missing_field_in_time_frame": "[Файл {file_index}] time_frames[{time_frame_index}] відсутнє обов'язкове поле '{field}'.",
-      "target_id_not_found": "ID '{target_id}' не знайдений у файлах або time_frames."
-
+      "target_id_not_found": "ID '{target_id}' не знайдений у файлах або time_frames.",
+      "must_be_dict": "Властивість \"{prop_name}\" повинна бути словником.",
+      "prop_must_be_string": "Властивість \"{prop_name}\" повинна бути рядком."
     }
   },
   "ru": {
@@ -93,7 +99,8 @@
       "min_freq": "Минимальная частота [Гц]:",
       "max_freq": "Максимальная частота [Гц]:",
       "overlap_percent": "Процент перекрытия [%]:",
-      "min_display_freq": "Мин. отображ. частота [Гц]:"
+      "min_display_freq": "Мин. отображ. частота [Гц]:",
+      "stft_missing_required_parameters": "Отсутствуют обязательные параметры: id, settings."
     },
     "dewesoft": {
       "label": "Файл Dewesoft ({extensions})"
@@ -126,7 +133,11 @@
       "amplitude": "Амплитуда",
 
       "max": "Максимум",
-      "hz": "Гц"
+      "hz": "Гц",
+      "crop_time_missing": "Начальное и конечное время должны быть указаны при включённой обрезке.",
+      "crop_time_invalid": "Начальное и конечное время должны быть корректными числами.",
+      "crop_time_order_error": "Конечное время должно быть больше начального.",
+      "show_result_graphs": "Показать полученные графики"
     },
     "plot": {
       "title": "График",
@@ -162,7 +173,9 @@
       "missing_time_frames_list": "[Файл {file_index}] 'time_frames' должен быть списком.",
       "time_frames_not_dict": "[Файл {file_index}] time_frames[{time_frame_index}] должен быть словарём.",
       "missing_field_in_time_frame": "[Файл {file_index}] time_frames[{time_frame_index}] отсутствует обязательное поле '{field}'.",
-      "target_id_not_found": "ID '{target_id}' не найден в файлах или time_frames."
+      "target_id_not_found": "ID '{target_id}' не найден в файлах или time_frames.",
+      "must_be_dict": "Свойство \"{prop_name}\" должно быть словарём.",
+      "prop_must_be_string": "Свойство \"{prop_name}\" должно быть строкой."
     }
   },
  "en": {
@@ -175,7 +188,8 @@
       "min_freq": "Minimum frequency [Hz]:",
       "max_freq": "Maximum frequency [Hz]:",
       "overlap_percent": "Overlap percentage [%]:",
-      "min_display_freq": "Min. display frequency [Hz]:"
+      "min_display_freq": "Min. display frequency [Hz]:",
+      "stft_missing_required_parameters": "Missing required parameters: id, settings."
     },
     "dewesoft": {
       "label": "Dewesoft file ({extensions})"
@@ -208,7 +222,11 @@
       "amplitude": "Amplitude",
 
       "max": "Maximum",
-      "hz": "Hz"
+      "hz": "Hz",
+      "crop_time_missing": "Start and end time must be specified when cropping is enabled.",
+      "crop_time_invalid": "Start and end time must be valid numbers.",
+      "crop_time_order_error": "End time must be greater than start time.",
+      "show_result_graphs": "Show generated graphs"
     },
     "plot": {
       "title": "Plot",
@@ -244,7 +262,9 @@
       "missing_time_frames_list": "[File {file_index}] 'time_frames' must be a list.",
       "time_frames_not_dict": "[File {file_index}] time_frames[{time_frame_index}] must be a dictionary.",
       "missing_field_in_time_frame": "[File {file_index}] time_frames[{time_frame_index}] is missing required field '{field}'.",
-      "target_id_not_found": "ID '{target_id}' not found in files or time_frames."
+      "target_id_not_found": "ID '{target_id}' not found in files or time_frames.",
+      "must_be_dict": "The \"{prop_name}\" property must be a dictionary.",
+      "prop_must_be_string": "The \"{prop_name}\" property must be a string."
     }
   }
 }

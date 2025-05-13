@@ -82,13 +82,12 @@ class PlotRenderer:
         window.geometry(f"+{x}+{y}")
         
     @classmethod
-    def save_multiply(cls, plots: list, path: str, dpi: int = 300):
+    def save_multiply(cls, plots: list, path: str = None, show_graph: bool = False, dpi: int = 100):
         if not plots:
             return
 
         n = len(plots)
-        # Increase the figure size based on the number of plots
-        fig_height = 3 * n  # 3 inches per plot
+        fig_height = 3 * n
         fig, axes = plt.subplots(n, 1, figsize=(8.27, fig_height), dpi=dpi, constrained_layout=True)
 
         if n == 1:
@@ -97,73 +96,54 @@ class PlotRenderer:
         for plot, ax in zip(plots, axes):
             plot._create_figure(ax)
 
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        fig.savefig(path, dpi=dpi)
-        plt.close(fig)
-        
-    @classmethod
-    def show_multiply(cls, plots: list):
-        if not plots:
-            return
+        if path:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            fig.savefig(path, dpi=dpi)
 
-        n = len(plots)
-        fig, axes = plt.subplots(n, 1, figsize=(6, 3 * n), dpi=100)
-        if n == 1:
-            axes = [axes]  # Convert to list for consistency
+        if show_graph:
+            fig.tight_layout(pad=2.0)
+            window = tk.Toplevel()
+            window.title(lang.get("plot.graphs"))
 
-        for plot, ax in zip(plots, axes):
-            plot._create_figure(ax)
+            canvas = FigureCanvasTkAgg(fig, master=window)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-        fig.tight_layout(pad=2.0)
-
-        # Tkinter window
-        window = tk.Toplevel()
-        window.title(lang.get("plot.graphs"))
-
-        canvas = FigureCanvasTkAgg(fig, master=window)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-        window.update_idletasks()
-        x = 100 + len(window.master.winfo_children()) * 40
-        y = 100 + len(window.master.winfo_children()) * 30
-        window.geometry(f"+{x}+{y}")
+            window.update_idletasks()
+            x = 100 + len(window.master.winfo_children()) * 40
+            y = 100 + len(window.master.winfo_children()) * 30
+            window.geometry(f"+{x}+{y}")
+        else:
+            plt.close(fig)
    
     @classmethod
-    def save_multiple_on_single_plot(cls, plots: list, path: str, dpi: int = 300):
+    def save_multiple_on_single_plot(cls, plots: list, path: str, dpi: int = 100, show_graph: bool = False):
         if not plots:
             return
 
         fig, ax = plt.subplots(figsize=(8.27, 6), dpi=dpi)
         peaks = []
-  
+
         for plot in plots:
             title = plot.title or lang.get("plot.without_name")
-            if plot.description:
-                label = f"{title}\n{plot.description}"
-            else:
-                label = title
-                
-            ax.plot(plot.xdata, plot.ydata, label=label, linewidth=1)
-            for peak in plot.peaks:
-                peaks.append(peak) 
+            label = f"{title}\n{plot.description}" if plot.description else title
 
-        # Collecting limits
-        xmins = [plot.xlim[0] for plot in plots if plot.xlim]
-        xmaxs = [plot.xlim[1] for plot in plots if plot.xlim]
-        ymins = [plot.ylim[0] for plot in plots if plot.ylim]
-        ymaxs = [plot.ylim[1] for plot in plots if plot.ylim]
-    
-        # Set limits if there is at least one
-        if xmins and xmaxs:
-            ax.set_xlim(min(xmins), max(xmaxs))
-        if ymins and ymaxs:
-            ax.set_ylim(min(ymins), max(ymaxs))
-            
+            ax.plot(plot.xdata, plot.ydata, label=label, linewidth=1)
+            peaks.extend(plot.peaks)
+
+        # Set axis limits
+        xlims = [plot.xlim for plot in plots if plot.xlim]
+        ylims = [plot.ylim for plot in plots if plot.ylim]
+
+        if xlims:
+            ax.set_xlim(min(x[0] for x in xlims), max(x[1] for x in xlims))
+        if ylims:
+            ax.set_ylim(min(y[0] for y in ylims), max(y[1] for y in ylims))
+
         for peak in peaks:
             ax.scatter(peak['x'], peak['y'], color='red', zorder=5,
-                       marker='o', facecolors='none', edgecolors='red', s=50)
- 
+                    marker='o', facecolors='none', edgecolors='red', s=50)
+
         ax.set_title(lang.get("plot.summary_plot"))
         ax.set_xlabel(lang.get("plot.xlabel"))
         ax.set_ylabel(lang.get("plot.ylabel"))
@@ -172,20 +152,18 @@ class PlotRenderer:
         if len(plots) > 1:
             ax.legend()
 
-        os.makedirs(os.path.dirname(path), exist_ok=True)
         fig.tight_layout(pad=1.0)
-        fig.savefig(path, dpi=dpi)
-        plt.close(fig)
 
-        # Add a legend if there are multiple plots
-        if len(plots) > 1:
-            ax.legend()
-
-        # image saving
+        # Save image
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        fig.tight_layout(pad=1.0)
         fig.savefig(path, dpi=dpi)
-        plt.close(fig)    
+
+        # Show or close
+        if show_graph:
+            plt.show(block=False)
+        else:
+            plt.close(fig)
+
 
     def save(self, path: str, dpi: int = 300):
         fig, ax = plt.subplots(dpi=dpi)
@@ -195,8 +173,7 @@ class PlotRenderer:
         fig.tight_layout(pad=1.0)
         fig.savefig(path, dpi=dpi)
         plt.close(fig)
-        
-        
+         
     def _create_figure(self, ax):
         # Apply plot settings
         ax.plot(self.xdata, self.ydata, linewidth=1, markersize=4)
@@ -219,8 +196,6 @@ class PlotRenderer:
                     horizontalalignment='left',
                     bbox=dict(facecolor='white', alpha=0.8, edgecolor='black'))
 
-        
-        
     def _save_dialog(self, title, xlabel, ylabel, description):
         self.title = title
         self.xlabel = xlabel

@@ -16,6 +16,7 @@ from utils.constants import DEWESOFT
 lang = LanguageManager()
 extensions = ', '.join(DEWESOFT.extensions)
 class DWReader(BaseReader):
+    id = DEWESOFT.id
     label = lang.get('dewesoft.label', extensions=extensions)
     
     def __init__(self, filepath: str = ''):

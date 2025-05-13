@@ -14,6 +14,7 @@ lang = LanguageManager()
 extensions = ', '.join(MERA.extensions)
 
 class MeraReader(BaseReader):
+    id = MERA.id
     label = lang.get('mera.label', extensions=extensions)
     
     def __init__(self, filepath: str = ''):

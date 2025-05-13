@@ -3,16 +3,19 @@ from datetime import datetime
 from tkinter import messagebox, ttk, filedialog
 import numpy as np
 import json
+import traceback
 
 from .plot_renderer import PlotRenderer
 
 from analyzers import STFT, Filter
-from utils.helpers import get_filename_without_extension
+from utils.helpers import get_filename_without_extension, get_file_path
 from utils.constants import FREQ_FRAMES, SOURCE_PROGRAMS
 from utils.csv_creator import save_data_to_csv
-from utils.execute_json import JSONExecutor
 from utils.language_manager import LanguageManager
 from utils.logger import Logger
+
+
+from engine import SignalEngine 
 
 from .modals import STFTSettings
 
@@ -24,12 +27,14 @@ class MainWindow:
         self.analyzers = [getattr(a, "label", a.__name__) for a in analyzers]
         self.file_path = None
         
+        self.source_program = None
+        
         self.lang = LanguageManager()
         
         
         programs = [pr.name for pr in SOURCE_PROGRAMS]
         self.root = tk.Tk()
-        self.root.title(self.lang.get("title", programs=programs))
+        self.root.title(self.lang.get("title", programs=", ".join(programs)))
         
         self.method_settings = None
 
@@ -45,10 +50,13 @@ class MainWindow:
                 with open(file_path, "r", encoding="utf-8") as f:
                     execute_settings = json.load(f)
                     
-                    executor = JSONExecutor(settings=execute_settings)
-                    executor.run()
+                    executor = SignalEngine(settings=execute_settings)
+                    
+                    # executor = JSONExecutor(settings=execute_settings)
+                    executor.start()
                 
             except Exception as e:
+                traceback.format_exc()
                 Logger.error(self.lang.get("logger.file_read_error", error=e))        
 
     def build_ui(self):
@@ -133,6 +141,16 @@ class MainWindow:
         self.stats_button = ttk.Button(frm, text=self.lang.get("ui.choose_save_path"), state='disabled', command=self.choose_stats_path)
         self.stats_button.grid(column=1, row=row, sticky='e', pady=10)
         row += 1
+        
+         # Checkbox for showing graphs
+        self.show_graph = tk.BooleanVar(value=False)
+        show_graph_chk = ttk.Checkbutton(
+            frm,
+            text=self.lang.get("ui.show_result_graphs"),
+            variable=self.show_graph
+        )
+        show_graph_chk.grid(column=1, row=row, sticky='w', padx=(0, 10))
+        row += 1
 
         ttk.Button(frm, text=self.lang.get("ui.analyze_signal"), command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
@@ -146,7 +164,7 @@ class MainWindow:
     def toggle_stats_widgets(self):
         """Enable or disable fields depending on the checkbox state."""
         state = 'normal' if self.save_stats.get() else 'disabled'
-        self.stats_entry.configure(state=state)
+        # self.stats_entry.configure(state=state)
         self.stats_button.configure(state=state)
 
     def choose_stats_path(self):
@@ -190,6 +208,7 @@ class MainWindow:
         if self.file_path:
             self.reader_instance = reader(filepath=self.file_path)
             channels = self.reader_instance.get_channels()
+            self.source_program = reader.id
             self.update_channels(channels)
               
       
@@ -211,100 +230,40 @@ class MainWindow:
         
         crop_enabled = self.crop_enabled.get()
         start_time = self.start_time_entry.get()
-        start_time = float(start_time) if start_time else start_time
         end_time = self.end_time_entry.get()
-        end_time = float(end_time) if end_time else end_time
         
-        min_freq = (self.method_settings or {}).get('min_freq', FREQ_FRAMES['MIN'])
-        max_freq = (self.method_settings or {}).get('min_freq', FREQ_FRAMES['MAX'])
-        
-       
-        
-        analys = self.analyzer_combo.get()
-        if analys == getattr(STFT, 'label', __name__):
-            self.render_stft_graphs(
-                channels=selected_channels, 
-                crop_enabled=crop_enabled, 
-                start_time=start_time, 
-                end_time=end_time, 
-                method_settings=self.method_settings
-            )
-        else:
-            print(f'Analys {analys} is not described')
-        
-     
-    def render_stft_graphs(
-        self, 
-        channels: list, 
-        crop_enabled=False, 
-        start_time=None, 
-        end_time=None,
-        method_settings=None
-    ):
-        if method_settings is None:
-            print(f'Something went wrong. Could not find method_settings ({self.method_settings})')
-            
-        window = (self.method_settings or {}).get('window')
-        nperseg = (self.method_settings or {}).get('nperseg')
-        
-        min_freq = (self.method_settings or {}).get('min_freq')
-        max_freq = (self.method_settings or {}).get('max_freq')
-        overlap_percent = (self.method_settings or {}).get('overlap_percent')
-        min_display_freq = (self.method_settings or {}).get('min_display_freq')
-    
-        stft = STFT(window=window, nperseg=nperseg, min_freq=min_freq, max_freq=max_freq, overlap_percent=overlap_percent, min_display_freq=min_display_freq)
-        file_name = get_filename_without_extension(self.file_path)
-        # filter = Filter(lowcut=5, highcut=2000)
-        plots = []
-        data_row = {
-            'filename': file_name
-        }
-        for channel in channels:
-            sampling_rate = self.reader_instance.get_sampling_rate(channel)
-            signal = self.reader_instance.read_channel(channel)
-            
-            if crop_enabled:
-                signal = self.reader_instance.slice_signal(signal, sampling_rate, start_time, end_time)
-            
-            result = stft.analyze(signal=signal, sampling_rate=sampling_rate, min_freq=min_freq, max_freq=max_freq)
-            frequencies, times, amplitudes = result
-            frequency, time, max_amplitudes = stft.find_peak_frequency_time(signal=result, min_frequency=min_display_freq)
+        if crop_enabled:
+            if not start_time or not end_time:
+                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_missing"))
+                return
 
-            renderer = PlotRenderer(xdata=frequencies, ydata=max_amplitudes)
-            max_idx = np.argmax(max_amplitudes)
-            max_x = frequencies[max_idx]
-            max_y = max_amplitudes[max_idx]
-            minutes = time // 60
-            seconds = time % 60
-            
-            renderer.set_peaks([{'x': max_x, 'y': max_y}])
-            
-            renderer.set_title(f"{file_name} ({channel})")
-            y_units = self.reader_instance.get_y_units(channel=channel)
-            y_label_text = self.lang.get("ui.amplitude")
-            y_label_text += f"({y_units})" if y_units else ""
-            
-            renderer.set_ylabel(y_label_text)
-            x_label_text = f"{self.lang.get("ui.frequency")} ({self.lang.get("ui.hz")})"
-            hz = self.lang.get("ui.hz")
-            renderer.set_xlabel(x_label_text)
-            formatted_time = self.lang.get("plot.formatted_time", min=f"{int(minutes)}", sec=f"{int(seconds):02d}")
-            renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} {hz}).\n{formatted_time}")
-            renderer.set_xlim((FREQ_FRAMES['MIN'], FREQ_FRAMES['MAX']))
-            renderer.set_ylim((0, max_y * 1.3))
-            data_row[channel] = f"{max_y:.2f} {y_units if y_units else ''}, {max_x:.2f} {hz}"
-            
-            plots.append(renderer)
-            # renderer.show()
-            
-        stats_path = self.stats_path.get()
-        if self.save_stats.get() and stats_path:
-            stats_file_name = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
-            save_data_to_csv(f'{stats_path}/{stats_file_name}.csv', [data_row])
-            
-        # 
-        PlotRenderer.show_multiply(plots=plots)
+            try:
+                start_time = float(start_time)
+                end_time = float(end_time)
+            except ValueError:
+                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_invalid"))
+                return
 
+            if end_time <= start_time:
+                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_order_error"))
+                return
+          
+        settings = SignalEngine.generate_settings_obj(
+            file_path=self.file_path,
+            source_program=self.source_program,
+            selected_channels=selected_channels,
+            method_settings=self.method_settings,
+            crop_enabled=crop_enabled,
+            start_time=start_time,
+            end_time=end_time,
+            save_stats=self.save_stats.get(),
+            stats_path=self.stats_path.get(),
+            show_graph=self.show_graph.get()
+        )        
+
+        executor = SignalEngine(settings=settings)
+        
+        executor.start()
 
     def run(self):
         self.root.mainloop()

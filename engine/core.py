@@ -78,7 +78,6 @@ class SignalEngine:
         try:
             # get files_settings
             files_settings = self.settings.get('files', [])
-            print('files_settings', files_settings)
             # get file_settings
             for file_settings in files_settings:
                 # get setting id
@@ -209,7 +208,6 @@ class SignalEngine:
         return {}
     
     def log_results_to_csv(self):
-        print('self.summary', self.summary)
         datarow = []
         for key in self.summary.keys():
             if not self.summary[key]['save_stats']:
@@ -224,12 +222,16 @@ class SignalEngine:
             datarow.append(data)
             
         groupped = group_by(datarow, 'output_file_path')
-        for path in groupped.keys():
-            output_file_path = groupped[key]['output_file_path']
+        filtered = {
+            key: [
+                {k: v for k, v in item.items() if k != 'output_file_path'}
+                for item in items
+            ]
+            for key, items in groupped.items()
+        }
+        for path in filtered.keys():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            # data = 
-            save_data_to_csv(f"{output_file_path}\\{timestamp}.csv", groupped[key])
-        print('groupped', groupped)
+            save_data_to_csv(f"{path}\\{timestamp}.csv", filtered[path])
         
     
     def assign_ids(self, settings: dict) -> None:

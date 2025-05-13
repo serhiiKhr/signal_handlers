@@ -70,7 +70,7 @@ class BaseHandler:
                     "groups_settings": file_settings.get("groups_settings", global_settings["groups_settings"]),
                     "method": file_settings.get("method", global_settings["method"]),
                     "source_program": file_settings.get("source_program", global_settings["source_program"]),
-                    "show_graph": global_settings["show_graph"] if 'show_graph' not in stats_settings else stats_settings.get("show_graph"),
+                    "show_graph": global_settings["show_graph"] if 'show_graph' not in file_settings else file_settings.get("show_graph"),
                     "save_stats": global_settings["save_stats"] if 'save_stats' not in stats_settings else stats_settings.get("save_stats"),
                     "output_file_path": stats_output_file_path or global_settings['output_file_path'] or get_file_path(file_path),
                     
@@ -241,6 +241,7 @@ class STFTHandler(BaseHandler):
             method_name = deep_get(self.settings, ['method', 'name'], '')
             channel_groups = deep_get(self.settings, ['groups_settings', 'groups'], [])
             single_image_group = deep_get(self.settings, ['groups_settings', 'single_image_group'], False)
+            show_graph = deep_get(self.settings, ['show_graph'], False)
             
             file_name = get_filename_without_extension(self.settings['file_path'])
             
@@ -272,9 +273,9 @@ class STFTHandler(BaseHandler):
                     group_file_name = "_".join(channel_group)
                     
                     if single_image_group:
-                        PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+                        PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, show_graph=show_graph, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
                     else:
-                        PlotRenderer.save_multiply(plots=grouped_channels, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+                        PlotRenderer.save_multiply(plots=grouped_channels, show_graph=show_graph, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
 
             else:
                 "save by one file"
@@ -288,7 +289,9 @@ class STFTHandler(BaseHandler):
                         path_arr.append(timeframe_settings['name'])
                         
                     valid_path = ensure_path_from_parts(path_arr)
-                    renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}") 
+                    renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}")
+                    if show_graph:
+                        renderer.show()
             
         
     

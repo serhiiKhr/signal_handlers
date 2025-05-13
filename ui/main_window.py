@@ -141,6 +141,16 @@ class MainWindow:
         self.stats_button = ttk.Button(frm, text=self.lang.get("ui.choose_save_path"), state='disabled', command=self.choose_stats_path)
         self.stats_button.grid(column=1, row=row, sticky='e', pady=10)
         row += 1
+        
+         # Checkbox for showing graphs
+        self.show_graph = tk.BooleanVar(value=False)
+        show_graph_chk = ttk.Checkbutton(
+            frm,
+            text=self.lang.get("ui.show_result_graphs"),
+            variable=self.show_graph
+        )
+        show_graph_chk.grid(column=1, row=row, sticky='w', padx=(0, 10))
+        row += 1
 
         ttk.Button(frm, text=self.lang.get("ui.analyze_signal"), command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
@@ -238,53 +248,22 @@ class MainWindow:
                 messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_order_error"))
                 return
           
-        settings = {}
-        # global settings
-        settings['source_program'] = self.source_program
-        settings['channels'] = selected_channels
-        settings['method'] = self.method_settings
-        
-        file_settings = {
-            'file_path': self.file_path,
-            'time_frames': []
-        }
-        if crop_enabled:
-            file_settings['time_frames'].append({
-                'name': f"segment_{start_time:.2f}_to_{end_time:.2f}s",
-                'start_time': start_time,
-                'end_time': end_time
-            })
-            
-        settings['files'] = [file_settings]
-         
-        save_stats = self.save_stats.get()
-        if save_stats:
-            output_file_path = self.stats_path.get()
-            settings['stats_settings'] = {
-                "save_stats": save_stats,
-                "output_file_path": output_file_path or get_file_path(self.file_path)
-            }
+        settings = SignalEngine.generate_settings_obj(
+            file_path=self.file_path,
+            source_program=self.source_program,
+            selected_channels=selected_channels,
+            method_settings=self.method_settings,
+            crop_enabled=crop_enabled,
+            start_time=start_time,
+            end_time=end_time,
+            save_stats=self.save_stats.get(),
+            stats_path=self.stats_path.get(),
+            show_graph=self.show_graph.get()
+        )        
 
         executor = SignalEngine(settings=settings)
         
-        # executor = JSONExecutor(settings=execute_settings)
         executor.start()
 
     def run(self):
         self.root.mainloop()
-        
-        
-        
-{
-    'source_program': ('dewesoft',), 
-    'channels': (['AI A-1', 'AI A-4'],), 
-    'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'min_display_freq': 100, 'name': 'stft'}, 
-    'files': [
-        {
-            'file_path': 'C:/Users/user/Desktop/13 11.06/ст.13_452_20240611_103211.dxd', 
-            'time_frames': [
-                {'name': 'test', 'start_time': 0, 'end_time': 1}
-            ]
-        }
-    ]
-}

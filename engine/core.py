@@ -3,7 +3,7 @@ import traceback
 from datetime import datetime
 
 # utils
-from utils.helpers import deep_get, group_by
+from utils.helpers import deep_get, group_by, get_file_path
 from utils.csv_creator import save_data_to_csv
 
 from utils.language_manager import LanguageManager
@@ -204,8 +204,50 @@ class SignalEngine:
         return errors
     
     @staticmethod
-    def generate_settings_obj():
-        return {}
+    def generate_settings_obj(**kwargs):
+        # save_stats, 
+        # show_graph, 
+        # stats_path, 
+        # source_program, 
+        # selected_channels, 
+        # method_settings, 
+        # file_path, 
+        # crop_enabled, 
+        # start_time, 
+        # end_time
+
+        # global settings
+        settings = {
+            "source_program": kwargs.get("source_program"),
+            "channels": kwargs.get("selected_channels", []),
+            "method": kwargs.get("method_settings", {}),
+            "show_graph": kwargs.get("show_graph", False),
+            "files": [],
+        }
+       
+        file_path = kwargs.get("file_path")
+        crop_enabled = kwargs.get("crop_enabled", False)
+        start_time = kwargs.get("start_time", 0)
+        end_time = kwargs.get("end_time", 0)
+        
+        file_settings = {"file_path": file_path, "time_frames": []}
+        if crop_enabled:
+            file_settings["time_frames"].append({
+                "name": f"segment_{start_time:.2f}_to_{end_time:.2f}s",
+                "start_time": start_time,
+                "end_time": end_time
+            })
+        settings["files"].append(file_settings)
+
+        if kwargs.get("save_stats", False):
+            output_file_path = kwargs.get("stats_path") or get_file_path(file_path)
+            settings["stats_settings"] = {
+                "save_stats": True,
+                "output_file_path": output_file_path
+            }
+            
+            
+        return settings
     
     def log_results_to_csv(self):
         datarow = []

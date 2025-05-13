@@ -46,7 +46,8 @@
       "hz": "Гц",
       "crop_time_missing": "Початковий і кінцевий час мають бути вказані, якщо обрізка увімкнена.",
       "crop_time_invalid": "Початковий і кінцевий час мають бути коректними числами.",
-      "crop_time_order_error": "Кінцевий час має бути більшим за початковий."
+      "crop_time_order_error": "Кінцевий час має бути більшим за початковий.",
+      "show_result_graphs": "Показати отримані графіки"
     },
     "plot": {
       "title": "Графік",
@@ -135,7 +136,8 @@
       "hz": "Гц",
       "crop_time_missing": "Начальное и конечное время должны быть указаны при включённой обрезке.",
       "crop_time_invalid": "Начальное и конечное время должны быть корректными числами.",
-      "crop_time_order_error": "Конечное время должно быть больше начального."
+      "crop_time_order_error": "Конечное время должно быть больше начального.",
+      "show_result_graphs": "Показать полученные графики"
     },
     "plot": {
       "title": "График",
@@ -223,7 +225,8 @@
       "hz": "Hz",
       "crop_time_missing": "Start and end time must be specified when cropping is enabled.",
       "crop_time_invalid": "Start and end time must be valid numbers.",
-      "crop_time_order_error": "End time must be greater than start time."
+      "crop_time_order_error": "End time must be greater than start time.",
+      "show_result_graphs": "Show generated graphs"
     },
     "plot": {
       "title": "Plot",

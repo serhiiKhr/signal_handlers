@@ -5,7 +5,9 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('translations.json', '.'), (
+        r'C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\dwdatareader\DWDataReaderLib64.dll', 
+        'dwdatareader')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

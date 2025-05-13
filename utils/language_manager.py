@@ -1,14 +1,22 @@
 import json
+import sys
 import os
 
 from decorators import singleton
 
 from .helpers import deep_get
 
+def resource_path(relative_path):
+    """ Gets the absolute path to a resource when running from .exe or from source code """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
 DEFAULT_LANGUAGE = 'uk'
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(base_dir, '..', 'translations.json')
+# file_path = os.path.join(base_dir, '..', 'translations.json')
+file_path = resource_path("translations.json")
 
 @singleton
 class LanguageManager:

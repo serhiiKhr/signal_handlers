@@ -80,12 +80,12 @@ class BaseHandler:
         return None
     
     def get_timeframe_settings_by_id(self, settings: dict, target_id: str):
-        for file in settings.get("files", []):
-            for frame in file.get("time_frames", []):
-                if frame.get("id") == target_id:
-                    file_settings = self.get_settings_by_id(settings=settings, target_id=file['id'])
-                    
-                    return {**file_settings, **frame}
+        for frame in settings.get("time_frames", []):
+            if frame.get("id") == target_id:
+                # file_settings = self.get_settings_by_id(settings=settings, target_id=settings['id'])
+                
+                return {**frame}
+            
                 
         Logger.error(self.lang.get("logger.target_id_not_found", target_id=target_id))
         return None
@@ -253,29 +253,44 @@ class STFTHandler(BaseHandler):
             path_arr.append(method_name)
             path_arr.append(file_name)
             
-            
-            time_frames_name = deep_get(self.settings, ['time_frames', 0, 'name'], '')
-            
-            if time_frames_name:
-                path_arr.append(time_frames_name)
-                
-            if len(channel_groups) > 0:
-                for channel_group in channel_groups:
-                    grouped_channels = []
-                    for i, ch in enumerate(channel_group):
-                        ch_result_index = find_index(groupped[id], lambda v: v['channel'] == ch)
-                        if ch_result_index >= 0:
-                            grouped_channels.append(groupped[id][ch_result_index]['renderer'])
-                        else:
-                            Logger.error(self.lang.get("logger.no_channel_in_computation_results", channel=ch))
-                                                    
-                    valid_path = ensure_path_from_parts(path_arr)
-                    group_file_name = "_".join(channel_group)
-                    
-                    if single_image_group:
-                        PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, show_graph=show_graph, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+            def get_groupped_channels(data, channel_group):
+                grouped_channels = []
+                for i, ch in enumerate(channel_group):
+                    ch_result_index = find_index(data, lambda v: v['channel'] == ch)
+                    if ch_result_index >= 0:
+                        grouped_channels.append(data[ch_result_index]['renderer'])
                     else:
-                        PlotRenderer.save_multiply(plots=grouped_channels, show_graph=show_graph, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}")
+                        Logger.error(self.lang.get("logger.no_channel_in_computation_results", channel=ch))
+                        
+                return grouped_channels
+            
+            def save_graph(grouped_channels: list, show_graph: bool, path: str, single_image_group: bool):
+                if single_image_group:
+                    PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, show_graph=show_graph, path=path)
+                else:
+                    PlotRenderer.save_multiply(plots=grouped_channels, show_graph=show_graph, path=path) 
+                
+                
+            valid_path = ensure_path_from_parts(path_arr)
+            if len(channel_groups) > 0:
+                
+                grouped_by_tf_id = group_by(groupped[id], 'tf_id')
+                tf_ids = grouped_by_tf_id.keys()
+                for channel_group in channel_groups:
+                    group_file_name = "_".join(channel_group)
+                     
+                    if len(tf_ids) > 0:
+                        for tf_id in tf_ids:
+                            path_arr_tf_id = path_arr[:]
+                            timeframe_settings = self.get_timeframe_settings_by_id(settings=self.settings, target_id=tf_id)
+                            grouped_channels = get_groupped_channels(grouped_by_tf_id[tf_id], channel_group)
+                            path_arr_tf_id.append(timeframe_settings['name'])
+                            valid_path = ensure_path_from_parts(path_arr_tf_id)
+                            
+                            save_graph(grouped_channels=grouped_channels, show_graph=show_graph, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}", single_image_group=single_image_group)
+                    else:
+                        grouped_channels = get_groupped_channels(groupped[id], channel_group)
+                        save_graph(grouped_channels=grouped_channels, show_graph=show_graph, path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}", single_image_group=single_image_group)
 
             else:
                 "save by one file"
@@ -283,12 +298,12 @@ class STFTHandler(BaseHandler):
                     
                     renderer = result['renderer']
                     channel = result['channel']
-                    
+                    path_arr_copy = path_arr[:]
                     if 'tf_id' in result:
                         timeframe_settings = self.get_timeframe_settings_by_id(settings=self.settings, target_id=result['tf_id'])
-                        path_arr.append(timeframe_settings['name'])
+                        path_arr_copy.append(timeframe_settings['name'])
                         
-                    valid_path = ensure_path_from_parts(path_arr)
+                    valid_path = ensure_path_from_parts(path_arr_copy)
                     renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}")
                     if show_graph:
                         renderer.show()

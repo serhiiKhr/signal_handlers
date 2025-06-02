@@ -17,7 +17,7 @@ from utils.logger import Logger
 
 from engine import SignalEngine 
 
-from .modals import STFTSettings
+from .modals import STFTSettings, TimeframeSettings
 
 class MainWindow:
     def __init__(self, readers: list, analyzers: list):
@@ -87,6 +87,53 @@ class MainWindow:
         self.channel_list.grid(column=0, row=row, columnspan=2, pady=5)
         row += 1
         
+        ttk.Button(frm, text=self.lang.get("ui.settings"), command=self.open_timeframe_dialog).grid(
+            column=1, row=row, sticky='e', pady=10
+        )
+        row += 1
+        ttk.Label(frm, text=self.lang.get("ui.start_of_analysis")).grid(column=0, row=row, sticky='w', pady=5)
+        scroll_container = ttk.Frame(frm)
+        scroll_container.grid(column=0, row=row, columnspan=2, sticky="w", pady=5)
+
+        canvas = tk.Canvas(scroll_container, height=100, width=300, highlightthickness=0)  # Ограничим и по высоте, и по ширине
+        scrollbar = ttk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
+
+        scrollable_frame = ttk.Frame(canvas)
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=False)
+        scrollbar.pack(side="right", fill="y")
+
+        # Пример наполнения
+        for i in range(20):
+            row_frame = ttk.Frame(scrollable_frame, width=300)
+            row_frame.pack(fill="x", padx=5, pady=2)
+
+            ttk.Label(row_frame, text=f"Элемент {i}A", width=11).grid(row=0, column=0, sticky="w", padx=(0, 5))
+            ttk.Label(row_frame, text=f"Элемент {i}B", width=6).grid(row=0, column=1, sticky="w", padx=(0, 5))
+            ttk.Label(row_frame, text=f"Элемент {i}C", width=6).grid(row=0, column=2, sticky="w", padx=(0, 5))
+            ttk.Label(row_frame, text=f" ", width=2).grid(row=0, column=3, sticky="w", padx=(0, 5))
+
+            # row_frame.columnconfigure(5, weight=1)  # Растянуть колонку для "прыжка" к правому краю
+            # row_frame.columnconfigure(6, weight=0)
+            ttk.Button(row_frame, text="Изменить", width=7).grid(row=0, column=4, sticky="e", padx=(0, 5))
+            ttk.Button(row_frame, text="Удалить", width=7).grid(row=0, column=5, sticky="e")
+            
+            row += 1
+            
+        for child in scrollable_frame.winfo_children():
+            try:
+                for ch in child.winfo_children():
+                    ch.configure(state='disabled')
+            except tk.TclError:
+                pass  # Некоторые виджеты (например, Label) не поддерживают 'state'
+   
         self.crop_enabled = tk.BooleanVar(value=False)
         chk_crop = ttk.Checkbutton(frm, text=self.lang.get("ui.analyze_fragment"), variable=self.crop_enabled, command=self.toggle_crop_widgets)
         chk_crop.grid(column=1, row=row, sticky='w', padx=(0, 10))
@@ -155,6 +202,13 @@ class MainWindow:
         ttk.Button(frm, text=self.lang.get("ui.analyze_signal"), command=self.analyze_selected).grid(
             column=1, row=row, sticky='e', pady=10
         )
+        
+    def open_timeframe_dialog(self, timeframe=None):
+        analys = self.analyzer_combo.get()
+        dialog = TimeframeSettings(data=timeframe)
+        dialog.open(self.root)
+        settings = dialog.get_settings()
+        print('settings=>', settings)
         
     def toggle_crop_widgets(self):
         state = 'normal' if self.crop_enabled.get() else 'disabled'

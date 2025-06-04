@@ -11,7 +11,13 @@
       "overlap_percent": "Відсоток перекриття [%]:",
       "min_display_freq": "Мін. відображ. частота [Hz]:",
       "stft_missing_required_parameters": "Відсутні обов'язкові параметри: id, settings."
-      },
+    },
+    "timeframe": {
+      "title": "Часовий інтервал",
+      "name": "Ім'я",
+      "start": "Початок",
+      "end": "Кінець"
+    },
     "dewesoft": {
       "label": "Dewesoft файл ({extensions})"
     },
@@ -47,7 +53,10 @@
       "crop_time_missing": "Початковий і кінцевий час мають бути вказані, якщо обрізка увімкнена.",
       "crop_time_invalid": "Початковий і кінцевий час мають бути коректними числами.",
       "crop_time_order_error": "Кінцевий час має бути більшим за початковий.",
-      "show_result_graphs": "Показати отримані графіки"
+      "show_result_graphs": "Показати отримані графіки",
+      "edit": "Змінити",
+      "delete": "Видалити",
+      "add_timeframe": "Додати фрагмент"
     },
     "plot": {
       "title": "Графік",
@@ -61,6 +70,9 @@
     "logger": {
       "app_started": "Програму запущено.",
       "field_required": "Параметр {field} є обов’язковим.",
+      "field_must_be_number": "Параметр {field} повинен бути числом.",
+      "a_must_be_more_then_b": "Параметр {a} повинен бути більшим ніж {b}.",
+      "already_used": "'{value}' вже використовується",
       "unknown_method": "Невідомий метод: {method}",
       "must_be_overridden": "Метод {method} повинен бути перевизначений у підкласі",
       "file_read_error": "Помилка під час читання файлу: {error}",

@@ -21,9 +21,12 @@ class BaseSettingsDialog:
 
         self.build_ui(self.settings_win)
 
-        ttk.Button(self.settings_win, text="OK", command=self._save_and_close).grid(
+        self.ok_button = ttk.Button(self.settings_win, text="OK", command=self._save_and_close)
+        self.ok_button.grid(
             column=0, row=self.get_rows(), columnspan=2, pady=10
         )
+        
+        self.on_change()
 
         self.settings_win.protocol("WM_DELETE_WINDOW", self._on_close)
 
@@ -56,3 +59,7 @@ class BaseSettingsDialog:
         """The line number where build_ui ends, to correctly position the OK button."""
         Logger.warning(self.lang.get('logger.must_be_overridden', method="get_row"))
         return
+    
+    def on_change(self):
+        pass
+    

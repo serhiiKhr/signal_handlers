@@ -1,1 +1,2 @@
 from .stft_settings import STFTSettings
+from .timeframe_settings import TimeframeSettings

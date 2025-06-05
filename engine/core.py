@@ -227,16 +227,18 @@ class SignalEngine:
        
         file_path = kwargs.get("file_path")
         crop_enabled = kwargs.get("crop_enabled", False)
-        start_time = kwargs.get("start_time", 0)
-        end_time = kwargs.get("end_time", 0)
+        time_frames = kwargs.get("time_frames", [])
+        # start_time = kwargs.get("start_time", 0)
+        # end_time = kwargs.get("end_time", 0)
         
         file_settings = {"file_path": file_path, "time_frames": []}
         if crop_enabled:
-            file_settings["time_frames"].append({
-                "name": f"segment_{start_time:.2f}_to_{end_time:.2f}s",
-                "start_time": start_time,
-                "end_time": end_time
-            })
+            for tf in time_frames:    
+                file_settings["time_frames"].append({
+                    "name": tf['name'],
+                    "start_time": tf['start'],
+                    "end_time": tf['end']
+                })
         settings["files"].append(file_settings)
 
         if kwargs.get("save_stats", False):

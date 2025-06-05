@@ -11,7 +11,13 @@
       "overlap_percent": "Відсоток перекриття [%]:",
       "min_display_freq": "Мін. відображ. частота [Hz]:",
       "stft_missing_required_parameters": "Відсутні обов'язкові параметри: id, settings."
-      },
+    },
+    "timeframe": {
+      "title": "Часовий інтервал",
+      "name": "Ім'я",
+      "start": "Початок",
+      "end": "Кінець"
+    },
     "dewesoft": {
       "label": "Dewesoft файл ({extensions})"
     },
@@ -24,7 +30,7 @@
       "execute": "Виконати",
       "open_the_file": "Відкрити {file}",
       "select_channels": "Оберіть канали:",
-      "analyze_fragment": "Аналізувати фрагмент",
+      "analyze_fragments": "Аналізувати фрагменти",
       "start_of_analysis": "Початок аналізу [с]:",
       "end_of_analysis": "Кінець аналізу [с]:",
       "analysis_method": "Метод аналізу:",
@@ -33,21 +39,21 @@
       "file_path": "Шлях до файлу:",
       "choose_save_path": "Оберіть шлях збереження...",
       "analyze_signal": "Аналізувати сигнал",
-      
       "choose_folder_to_save": "Оберіть папку для збереження",
       "warning": "Увага",
       "select_at_least_one_channel": "Виберіть хоча б один канал.",
-      
       "frequency": "Частота",
       "save": "Зберегти",
       "amplitude": "Амплітуда",
-    
       "max": "Максимум",
       "hz": "Гц",
       "crop_time_missing": "Початковий і кінцевий час мають бути вказані, якщо обрізка увімкнена.",
       "crop_time_invalid": "Початковий і кінцевий час мають бути коректними числами.",
       "crop_time_order_error": "Кінцевий час має бути більшим за початковий.",
-      "show_result_graphs": "Показати отримані графіки"
+      "show_result_graphs": "Показати отримані графіки",
+      "edit": "Змінити",
+      "delete": "Видалити",
+      "add_timeframe": "Додати фрагмент"
     },
     "plot": {
       "title": "Графік",
@@ -61,6 +67,9 @@
     "logger": {
       "app_started": "Програму запущено.",
       "field_required": "Параметр {field} є обов’язковим.",
+      "field_must_be_number": "Параметр {field} повинен бути числом.",
+      "a_must_be_more_then_b": "Параметр {a} повинен бути більшим ніж {b}.",
+      "already_used": "'{value}' вже використовується",
       "unknown_method": "Невідомий метод: {method}",
       "must_be_overridden": "Метод {method} повинен бути перевизначений у підкласі",
       "file_read_error": "Помилка під час читання файлу: {error}",
@@ -75,7 +84,6 @@
       "elements_must_be_strings": "В '{prop_name}' всі елементи повинні бути рядками (каналами).",
       "prop_must_be_boolean": "'{prop_name}' повинен бути булевим значенням.",
       "no_channel_in_computation_results": "Немає каналу {channel} в списку результатів обчислення",
-
       "all_elements_must_be_strings": "Усі елементи в '{prop_name}' повинні бути рядками.",
       "missing_file_path": "[Файл {file_index}] Відсутній обов'язковий параметр 'file_path'.",
       "missing_method_name": "[Файл {file_index}] Налаштування 'method' відсутні або не містять обов'язковий параметр 'name'.",
@@ -102,6 +110,12 @@
       "min_display_freq": "Мин. отображ. частота [Гц]:",
       "stft_missing_required_parameters": "Отсутствуют обязательные параметры: id, settings."
     },
+    "timeframe": {
+      "title": "Часовой интервал",
+      "name": "Имя",
+      "start": "Начало",
+      "end": "Конец"
+    },
     "dewesoft": {
       "label": "Файл Dewesoft ({extensions})"
     },
@@ -109,35 +123,35 @@
       "label": "Файл MERA ({extensions})"
     },
     "ui": {
-      "select_json": "Выберите JSON-файл",
-      "select_json_window": "JSON-файлы",
+      "select_json": "Выберите JSON файл",
+      "select_json_window": "JSON файлы",
       "execute": "Выполнить",
       "open_the_file": "Открыть {file}",
       "select_channels": "Выберите каналы:",
-      "analyze_fragment": "Анализировать фрагмент",
+      "analyze_fragments": "Анализировать фрагменты",
       "start_of_analysis": "Начало анализа [с]:",
       "end_of_analysis": "Конец анализа [с]:",
       "analysis_method": "Метод анализа:",
       "settings": "Настройки",
       "save_statistics_to_file": "Сохранять статистику в файл",
       "file_path": "Путь к файлу:",
-      "choose_save_path": "Выберите путь для сохранения...",
+      "choose_save_path": "Выберите путь сохранения...",
       "analyze_signal": "Анализировать сигнал",
-
       "choose_folder_to_save": "Выберите папку для сохранения",
       "warning": "Внимание",
       "select_at_least_one_channel": "Выберите хотя бы один канал.",
-
       "frequency": "Частота",
       "save": "Сохранить",
       "amplitude": "Амплитуда",
-
       "max": "Максимум",
       "hz": "Гц",
       "crop_time_missing": "Начальное и конечное время должны быть указаны при включённой обрезке.",
       "crop_time_invalid": "Начальное и конечное время должны быть корректными числами.",
       "crop_time_order_error": "Конечное время должно быть больше начального.",
-      "show_result_graphs": "Показать полученные графики"
+      "show_result_graphs": "Показать полученные графики",
+      "edit": "Изменить",
+      "delete": "Удалить",
+      "add_timeframe": "Добавить фрагмент"
     },
     "plot": {
       "title": "График",
@@ -151,6 +165,9 @@
     "logger": {
       "app_started": "Программа запущена.",
       "field_required": "Параметр {field} обязателен.",
+      "field_must_be_number": "Параметр {field} должен быть числом.",
+      "a_must_be_more_then_b": "Параметр {a} должен быть больше чем {b}.",
+      "already_used": "'{value}' уже используется",
       "unknown_method": "Неизвестный метод: {method}",
       "must_be_overridden": "Метод {method} должен быть переопределён в подклассе",
       "file_read_error": "Ошибка при чтении файла: {error}",
@@ -170,26 +187,32 @@
       "missing_method_name": "[Файл {file_index}] Настройки 'method' отсутствуют или не содержат обязательный параметр 'name'.",
       "missing_channels": "[Файл {file_index}] Не указаны каналы: ни в файле, ни глобально.",
       "missing_source_program": "[Файл {file_index}] Не указан 'source_program': ни в файле, ни глобально.",
-      "missing_time_frames_list": "[Файл {file_index}] 'time_frames' должен быть списком.",
-      "time_frames_not_dict": "[Файл {file_index}] time_frames[{time_frame_index}] должен быть словарём.",
+      "missing_time_frames_list": "[Файл {file_index}] 'time_frames' должно быть списком.",
+      "time_frames_not_dict": "[Файл {file_index}] time_frames[{time_frame_index}] должно быть словарём.",
       "missing_field_in_time_frame": "[Файл {file_index}] time_frames[{time_frame_index}] отсутствует обязательное поле '{field}'.",
       "target_id_not_found": "ID '{target_id}' не найден в файлах или time_frames.",
       "must_be_dict": "Свойство \"{prop_name}\" должно быть словарём.",
       "prop_must_be_string": "Свойство \"{prop_name}\" должно быть строкой."
     }
   },
- "en": {
+  "en": {
     "title": "Signal Analysis ({programs})",
     "stft": {
       "label": "STFT Analysis",
       "settings": "STFT Settings",
       "window": "Window:",
-      "nperseg": "Spectrum lines:",
+      "nperseg": "Number of spectrum lines:",
       "min_freq": "Minimum frequency [Hz]:",
       "max_freq": "Maximum frequency [Hz]:",
       "overlap_percent": "Overlap percentage [%]:",
-      "min_display_freq": "Min. display frequency [Hz]:",
+      "min_display_freq": "Min display frequency [Hz]:",
       "stft_missing_required_parameters": "Missing required parameters: id, settings."
+    },
+    "timeframe": {
+      "title": "Time Frame",
+      "name": "Name",
+      "start": "Start",
+      "end": "End"
     },
     "dewesoft": {
       "label": "Dewesoft file ({extensions})"
@@ -203,7 +226,7 @@
       "execute": "Execute",
       "open_the_file": "Open {file}",
       "select_channels": "Select channels:",
-      "analyze_fragment": "Analyze fragment",
+      "analyze_fragments": "Analyze fragments",
       "start_of_analysis": "Start of analysis [s]:",
       "end_of_analysis": "End of analysis [s]:",
       "analysis_method": "Analysis method:",
@@ -212,42 +235,45 @@
       "file_path": "File path:",
       "choose_save_path": "Choose save path...",
       "analyze_signal": "Analyze signal",
-
       "choose_folder_to_save": "Choose folder to save",
       "warning": "Warning",
       "select_at_least_one_channel": "Select at least one channel.",
-
       "frequency": "Frequency",
       "save": "Save",
       "amplitude": "Amplitude",
-
       "max": "Maximum",
       "hz": "Hz",
-      "crop_time_missing": "Start and end time must be specified when cropping is enabled.",
+      "crop_time_missing": "Start and end time must be specified if cropping is enabled.",
       "crop_time_invalid": "Start and end time must be valid numbers.",
       "crop_time_order_error": "End time must be greater than start time.",
-      "show_result_graphs": "Show generated graphs"
+      "show_result_graphs": "Show resulting graphs",
+      "edit": "Edit",
+      "delete": "Delete",
+      "add_timeframe": "Add fragment"
     },
     "plot": {
       "title": "Plot",
       "xlabel": "Time",
       "ylabel": "Amplitude",
       "graphs": "Graphs",
-      "without_name": "Untitled",
-      "summary_plot": "Summary Plot",
+      "without_name": "Without name",
+      "summary_plot": "Summary plot",
       "formatted_time": "At {min} min {sec} sec"
     },
     "logger": {
       "app_started": "Application started.",
       "field_required": "Parameter {field} is required.",
+      "field_must_be_number": "Parameter {field} must be a number.",
+      "a_must_be_more_then_b": "Parameter {a} must be greater than {b}.",
+      "already_used": "'{value}' is already used",
       "unknown_method": "Unknown method: {method}",
-      "must_be_overridden": "Method {method} must be overridden in a subclass",
+      "must_be_overridden": "Method {method} must be overridden in subclass",
       "file_read_error": "Error reading file: {error}",
-      "file_saved": "File saved to: {file_path}",
+      "file_saved": "File saved at: {file_path}",
       "file_saving_cancelled": "Saving cancelled.",
       "unknown_source_program": "Unknown source program: {source_program}",
-      "file_from_cache": "File {file_path}, channel {channel} loaded from cache",
-      "field_required_error": "{field} is required. Error in file: {file_settings}",
+      "file_from_cache": "File {file_path}, channel {channel} taken from cache",
+      "field_required_error": "{field} required. Error in file: {file_settings}",
       "method_not_implemented": "Processing method {method_name} not implemented.",
       "global_settings_error": "Global settings '{method}' must contain parameter '{name}'.",
       "must_be_list": "'{prop_name}' must be a list.",
@@ -255,16 +281,16 @@
       "prop_must_be_boolean": "'{prop_name}' must be a boolean.",
       "no_channel_in_computation_results": "Channel {channel} not found in computation results.",
       "all_elements_must_be_strings": "All elements in '{prop_name}' must be strings.",
-      "missing_file_path": "[File {file_index}] Required parameter 'file_path' is missing.",
-      "missing_method_name": "[File {file_index}] 'method' settings are missing or do not contain required parameter 'name'.",
-      "missing_channels": "[File {file_index}] No channels specified: neither in file nor globally.",
+      "missing_file_path": "[File {file_index}] Missing required parameter 'file_path'.",
+      "missing_method_name": "[File {file_index}] 'method' settings missing or lack required 'name' parameter.",
+      "missing_channels": "[File {file_index}] Channels not specified: neither in file nor globally.",
       "missing_source_program": "[File {file_index}] 'source_program' not specified: neither in file nor globally.",
       "missing_time_frames_list": "[File {file_index}] 'time_frames' must be a list.",
       "time_frames_not_dict": "[File {file_index}] time_frames[{time_frame_index}] must be a dictionary.",
-      "missing_field_in_time_frame": "[File {file_index}] time_frames[{time_frame_index}] is missing required field '{field}'.",
+      "missing_field_in_time_frame": "[File {file_index}] time_frames[{time_frame_index}] missing required field '{field}'.",
       "target_id_not_found": "ID '{target_id}' not found in files or time_frames.",
-      "must_be_dict": "The \"{prop_name}\" property must be a dictionary.",
-      "prop_must_be_string": "The \"{prop_name}\" property must be a string."
+      "must_be_dict": "Property \"{prop_name}\" must be a dictionary.",
+      "prop_must_be_string": "Property \"{prop_name}\" must be a string."
     }
   }
 }

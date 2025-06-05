@@ -209,7 +209,7 @@ class MainWindow:
         self.crop_enabled = tk.BooleanVar(value=False)
         chk_crop = ttk.Checkbutton(
             self.frm, 
-            text=self.lang.get("ui.analyze_fragment"), 
+            text=self.lang.get("ui.analyze_fragments"), 
             variable=self.crop_enabled, 
             command=self.toggle_crop_widgets
         )
@@ -218,18 +218,6 @@ class MainWindow:
         
         self.toggle_crop_widgets()
 
-        # ttk.Label(frm, text=self.lang.get("ui.start_of_analysis")).grid(column=0, row=row, sticky='e', pady=5)
-        # self.start_time_entry = ttk.Entry(frm, state="disabled")
-        # self.start_time_entry.insert(0, "0.0")
-        # self.start_time_entry.grid(column=1, row=row, sticky='w')
-        # row += 1
-
-        # ttk.Label(frm, text=self.lang.get("ui.end_of_analysis")).grid(column=0, row=row, sticky='e', pady=5)
-        # self.end_time_entry = ttk.Entry(frm, state="disabled")
-        # self.end_time_entry.insert(0, "1.0")
-        # self.end_time_entry.grid(column=1, row=row, sticky='w')
-        # row += 1
-        
         ttk.Label(self.frm, text=self.lang.get("ui.analysis_method")).grid(column=0, row=row, sticky='e', pady=5)
         self.analyzer_combo = ttk.Combobox(self.frm, values=self.analyzers)
     
@@ -387,24 +375,24 @@ class MainWindow:
             return
         
         crop_enabled = self.crop_enabled.get()
-        start_time = self.start_time_entry.get()
-        end_time = self.end_time_entry.get()
+        # start_time = self.start_time_entry.get()
+        # end_time = self.end_time_entry.get()
         
-        if crop_enabled:
-            if not start_time or not end_time:
-                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_missing"))
-                return
+        # if crop_enabled:
+            # if not start_time or not end_time:
+            #     messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_missing"))
+            #     return
 
-            try:
-                start_time = float(start_time)
-                end_time = float(end_time)
-            except ValueError:
-                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_invalid"))
-                return
+            # try:
+            #     start_time = float(start_time)
+            #     end_time = float(end_time)
+            # except ValueError:
+            #     messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_invalid"))
+            #     return
 
-            if end_time <= start_time:
-                messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_order_error"))
-                return
+            # if end_time <= start_time:
+            #     messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.crop_time_order_error"))
+            #     return
           
         settings = SignalEngine.generate_settings_obj(
             file_path=self.file_path,
@@ -412,13 +400,13 @@ class MainWindow:
             selected_channels=selected_channels,
             method_settings=self.method_settings,
             crop_enabled=crop_enabled,
-            start_time=start_time,
-            end_time=end_time,
+            time_frames=self.timeframes,
+            # start_time=start_time,
+            # end_time=end_time,
             save_stats=self.save_stats.get(),
             stats_path=self.stats_path.get(),
             show_graph=self.show_graph.get()
         )        
-
         executor = SignalEngine(settings=settings)
         
         executor.start()

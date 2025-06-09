@@ -16,7 +16,8 @@
       "title": "Часовий інтервал",
       "name": "Ім'я",
       "start": "Початок",
-      "end": "Кінець"
+      "end": "Кінець",
+      "length_error": "Кінець інтервалу \"{name}\" ({time} с) перевищує тривалість сигналу ({max} с)"
     },
     "dewesoft": {
       "label": "Dewesoft файл ({extensions})"
@@ -114,7 +115,8 @@
       "title": "Часовой интервал",
       "name": "Имя",
       "start": "Начало",
-      "end": "Конец"
+      "end": "Конец",
+      "length_error": "Конец интервала \"{name}\" ({time} с) превышает длительность сигнала ({max} с)"
     },
     "dewesoft": {
       "label": "Файл Dewesoft ({extensions})"
@@ -212,7 +214,8 @@
       "title": "Time Frame",
       "name": "Name",
       "start": "Start",
-      "end": "End"
+      "end": "End",
+      "length_error": "End of interval \"{name}\" ({time} s) exceeds the signal duration ({max} s)"
     },
     "dewesoft": {
       "label": "Dewesoft file ({extensions})"

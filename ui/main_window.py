@@ -40,7 +40,7 @@ class ToolTip:
         y += self.widget.winfo_rooty() + 20
 
         self.tooltip = tk.Toplevel(self.widget)
-        self.tooltip.wm_overrideredirect(True)  # Убираем рамку окна
+        self.tooltip.wm_overrideredirect(True)  # window frame removing
         self.tooltip.wm_geometry(f"+{x}+{y}")
 
         label = tk.Label(
@@ -87,12 +87,12 @@ class MainWindow:
         
         self.timeframes: List[Timeframe] = []
 
-        self.timeframes.append({"id": '1', "name": "test 1", "start": 0.01, "end": 1.00})
-        self.timeframes.append({"id": '2', "name": "test 2", "start": 1.01, "end": 33.00})
-        self.timeframes.append({"id": '3', "name": "test 3", "start": 1.01, "end": 33.00})
-        self.timeframes.append({"id": '4', "name": "test 4", "start": 1.01, "end": 33.00})
-        self.timeframes.append({"id": '5', "name": "test 5", "start": 1.01, "end": 33.00})
-        self.timeframes.append({"id": '6', "name": "test 6", "start": 1.01, "end": 33.00})
+        # self.timeframes.append({"id": '1', "name": "test 1", "start": 0.01, "end": 1.00})
+        # self.timeframes.append({"id": '2', "name": "test 2", "start": 1.01, "end": 33.00})
+        # self.timeframes.append({"id": '3', "name": "test 3", "start": 1.01, "end": 33.00})
+        # self.timeframes.append({"id": '4', "name": "test 4", "start": 1.01, "end": 33.00})
+        # self.timeframes.append({"id": '5', "name": "test 5", "start": 1.01, "end": 33.00})
+        # self.timeframes.append({"id": '6', "name": "test 6", "start": 1.01, "end": 33.00})
         self.build_ui()
         
     def open_json_script(self):
@@ -154,10 +154,11 @@ class MainWindow:
         self.frm.grid()
         
         row = 0
-        ttk.Button(self.frm, text=self.lang.get("ui.execute"), command=self.open_json_script).grid(
-            column=1, row=row, sticky='e', pady=10
-        )
-        row += 1
+        # We don't need "Execute" function
+        # ttk.Button(self.frm, text=self.lang.get("ui.execute"), command=self.open_json_script).grid(
+        #     column=1, row=row, sticky='e', pady=10
+        # )
+        # row += 1
        
         # File selection buttons
         for idx, reader in enumerate(self.readers):
@@ -278,6 +279,10 @@ class MainWindow:
             self.timeframes.append({**result, 'id': str(uuid.uuid4())})
            
             self.render_timeframes(self.timeframes_frame, self.timeframes)
+            
+        if len(self.timeframes) > 0:
+            self.crop_enabled.set(True)
+            self.toggle_crop_widgets()
     
     def edit_timeframe(self, timeframe):
         print('edit', timeframe)
@@ -292,6 +297,9 @@ class MainWindow:
     def delete_timeframe(self, timeframe):
         self.timeframes = [tf for tf in self.timeframes if tf["id"] != timeframe["id"]]
         self.render_timeframes(self.timeframes_frame, self.timeframes)
+        if len(self.timeframes) == 0:
+            self.crop_enabled.set(False)
+            self.toggle_crop_widgets()
 
         
     def toggle_crop_widgets(self):
@@ -355,6 +363,7 @@ class MainWindow:
             self.reader_instance = reader(filepath=self.file_path)
             channels = self.reader_instance.get_channels()
             self.source_program = reader.id
+            self.timeframes = []
             self.update_channels(channels)
               
       
@@ -375,6 +384,17 @@ class MainWindow:
             return
         
         crop_enabled = self.crop_enabled.get()
+        if crop_enabled:
+            # lengths = {}
+            for ch in selected_channels:
+                length = self.reader_instance.get_signal_length(channel=ch)
+                # print(f'for "{ch}" length = {lengths[ch]}')
+                
+                for timeframe in self.timeframes:
+                    if timeframe['end'] > length:
+                        messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("timeframe.length_error", name=timeframe['name'], time=timeframe['end'], max=f"{length:.2f}"))
+                        return
+            
         # start_time = self.start_time_entry.get()
         # end_time = self.end_time_entry.get()
         

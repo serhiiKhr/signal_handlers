@@ -14,6 +14,10 @@ class BaseReader(ABC):
     def read_channel(self, filepath: str, channel: str):
         pass
     
+    @abstractmethod
+    def get_signal_length(self, channel: str):
+        pass
+    
     def ensure_series(self, data):
         if not isinstance(data, pd.Series):
             data = pd.Series(data)

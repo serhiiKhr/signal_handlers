@@ -81,3 +81,13 @@ class MeraReader(BaseReader):
             data = k1 * data + k0
     
         return data
+    
+    def get_signal_length(self, channel: str):
+        if not channel:
+            return None
+        
+        sampling_rate = self.get_sampling_rate(ch_name=channel)
+              
+        data = self.read_channel(channel=channel)
+        length = len(data) / sampling_rate 
+        return length

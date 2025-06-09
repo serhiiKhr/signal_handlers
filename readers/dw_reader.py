@@ -52,5 +52,17 @@ class DWReader(BaseReader):
                     return dataframe[channel]
         
         return None
+ 
+    def get_signal_length(self, channel: str):
+        with dw.open(self.filepath) as f:
+            for ch in f.channels:
+                if channel == ch.name:
+                    number_of_samples = ch.number_of_samples
+                    sampling_rate = self.get_sampling_rate(ch_name=channel)
+                    length = number_of_samples / sampling_rate
+                    return length
+      
+        return None
+    
 
     

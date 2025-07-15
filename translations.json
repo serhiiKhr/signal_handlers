@@ -12,6 +12,16 @@
       "min_display_freq": "Мін. відображ. частота [Hz]:",
       "stft_missing_required_parameters": "Відсутні обов'язкові параметри: id, settings."
     },
+    "psd": {
+      "label": "Спектральна густина потужності",
+      "settings": "Налаштування PSD",
+      "window": "Вікно:",
+      "nperseg": "Кількість ліній спектру:",
+      "min_freq": "Мінімальна частота [Hz]:",
+      "max_freq": "Максимальна частота [Hz]:",
+      "overlap_percent": "Відсоток перекриття [%]:",
+      "min_display_freq": "Мін. відображ. частота [Hz]:"
+    },
     "timeframe": {
       "title": "Часовий інтервал",
       "name": "Ім'я",
@@ -54,7 +64,9 @@
       "show_result_graphs": "Показати отримані графіки",
       "edit": "Змінити",
       "delete": "Видалити",
-      "add_timeframe": "Додати фрагмент"
+      "add_timeframe": "Додати фрагмент",
+      "psd": "Спектральна щільність потужності",
+      "unit_psd": "g²/Гц"
     },
     "plot": {
       "title": "Графік",
@@ -111,6 +123,16 @@
       "min_display_freq": "Мин. отображ. частота [Гц]:",
       "stft_missing_required_parameters": "Отсутствуют обязательные параметры: id, settings."
     },
+    "psd": {
+      "label": "Спектральная плотность мощности",
+      "settings": "Настройки PSD",
+      "window": "Окно:",
+      "nperseg": "Число линий спектра:",
+      "min_freq": "Минимальная частота [Гц]:",
+      "max_freq": "Максимальная частота [Гц]:",
+      "overlap_percent": "Процент перекрытия [%]:",
+      "min_display_freq": "Мин. отображ. частота [Гц]:"
+    },
     "timeframe": {
       "title": "Часовой интервал",
       "name": "Имя",
@@ -153,7 +175,9 @@
       "show_result_graphs": "Показать полученные графики",
       "edit": "Изменить",
       "delete": "Удалить",
-      "add_timeframe": "Добавить фрагмент"
+      "add_timeframe": "Добавить фрагмент",
+      "psd": "Спектральная плотность мощности",
+      "unit_psd": "g²/Гц"
     },
     "plot": {
       "title": "График",
@@ -210,6 +234,16 @@
       "min_display_freq": "Min display frequency [Hz]:",
       "stft_missing_required_parameters": "Missing required parameters: id, settings."
     },
+    "psd": {
+      "label": "Power Spectral Density (PSD)",
+      "settings": "PSD Settings",
+      "window": "Window:",
+      "nperseg": "Number of spectrum lines:",
+      "min_freq": "Minimum frequency [Hz]:",
+      "max_freq": "Maximum frequency [Hz]:",
+      "overlap_percent": "Overlap percentage [%]:",
+      "min_display_freq": "Min display frequency [Hz]:"
+    },
     "timeframe": {
       "title": "Time Frame",
       "name": "Name",
@@ -252,7 +286,9 @@
       "show_result_graphs": "Show resulting graphs",
       "edit": "Edit",
       "delete": "Delete",
-      "add_timeframe": "Add fragment"
+      "add_timeframe": "Add fragment",
+      "psd": "Power Spectral Density (m²/s⁴/Hz)",
+      "unit_psd": "g²/Hz"
     },
     "plot": {
       "title": "Plot",

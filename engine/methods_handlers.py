@@ -2,13 +2,13 @@ import numpy
 
 from utils.language_manager import LanguageManager
 from utils.logger import Logger
-from utils.helpers import get_file_path, get_filename_without_extension, group_by, deep_get, find_index, ensure_path_from_parts, get_file_path
+from utils.helpers import get_file_path, get_filename_without_extension, group_by, deep_get, find_index, ensure_path_from_parts, get_file_path, detect_unit_type
 from utils.csv_creator import save_data_to_csv
 
 from ui.plot_renderer import PlotRenderer
 
 # analyzers
-from analyzers import STFT, BaseAnalyzer
+from analyzers import STFT, PSD, BaseAnalyzer
 
 # readers
 from readers import MeraReader, DWReader, BaseReader
@@ -307,7 +307,238 @@ class STFTHandler(BaseHandler):
                     renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}")
                     if show_graph:
                         renderer.show()
-            
+             
+class PSDHandler(BaseHandler):
+    def __init__(
+        self,
+        id: str = '',
+        settings: dict = None
+    ):
+        super().__init__()
         
+        if not id or settings is None:
+            error = self.lang.get("psd.psd_missing_required_parameters")
+            Logger.error(error)
+            raise ValueError(error)
+        
+        self.id = id
+        self.settings = self.get_settings_by_id(settings=settings, target_id=self.id)
+        
+        source_program = deep_get(settings, ['source_program'], '')
+        file_path = deep_get(settings, ['file_path'], '')
+        
+        window = deep_get(self.settings, ['method', 'window'], None)
+        nperseg = deep_get(self.settings, ['method', 'nperseg'], None)
+        min_freq = deep_get(self.settings, ['method', 'min_freq'], None)
+        max_freq = deep_get(self.settings, ['method', 'max_freq'], None)
+        overlap_percent = deep_get(self.settings, ['method', 'overlap_percent'], None)
+        # min_display_freq = deep_get(self.settings, ['method', 'overlap_percent'], None)
+        scaling = deep_get(self.settings, ['method', 'scaling'], None)
+        
+        self.analyzer = PSD(
+            window=window, 
+            nperseg=nperseg,
+            min_freq=min_freq,
+            max_freq=max_freq,
+            overlap_percent=overlap_percent,
+            scaling=scaling,
+        )
+        
+        self.file_reader = BaseHandler.get_file_reader(source_program=source_program, file_path=file_path)
+        
+        
+    def run(self, signals=None):
+        channels = deep_get(self.settings, ['channels'], [])
+        time_frames = deep_get(self.settings, ['time_frames'], None)
+        file_path = deep_get(self.settings, ['file_path'], '')
+        source_program = deep_get(self.settings, ['source_program'], '')
+        file_name = get_filename_without_extension(file_path)
+        
+        min_freq = deep_get(self.settings, ['method', 'min_freq'], FREQ_FRAMES['MIN'])
+        max_freq = deep_get(self.settings, ['method', 'max_freq'], FREQ_FRAMES['MAX'])
+        # min_display_freq = deep_get(self.settings, ['method', 'min_display_freq'], None)
+        
+        save_stats = deep_get(self.settings, ['save_stats'], False)
+        output_file_path = deep_get(self.settings, ['output_fil_path'], '')
+        
+        self.file_reader = BaseHandler.get_file_reader(source_program=source_program, file_path=file_path)
+        
+        for channel in channels:
+            channel_signal = deep_get(signals, [channel], (None, None))
+            if channel_signal:
+                signal = channel_signal.data
+                sampling_rate = channel_signal.sampling_rate
+            else:
+                Logger.error(f'no channel ({channel}) in signal')
+                return
+            
+            # if timeframe exist
+            if time_frames is not None and (isinstance(time_frames, list) and len(time_frames) > 0):
+                for time_frame in time_frames:
+                    sliced_data = self.file_reader.slice_signal(data=signal, sampling_rate=sampling_rate, start_time=time_frame['start_time'], end_time=time_frame['end_time'])
+                    result = self.analyzer.analyze(signal=sliced_data, sampling_rate=sampling_rate, min_freq=min_freq, max_freq=max_freq)
+                    
+                    renderer, summary = self.handle(
+                        file_path=file_path,
+                        channel=channel,
+                        time_frame=time_frame,
+                        freq_frame=(min_freq, max_freq),
+                        result=result,
+                    )
+                    self.results.append({
+                        'renderer': renderer,
+                        'summary': summary,
+                        'channel': channel,
+                        'id': self.id,
+                        'tf_id': time_frame['id']
+                    })
+                    summary_name = f"{file_name} {time_frame['name']}"
+                    if summary_name not in self.summary:
+                        self.summary[summary_name] = {}
+                        self.summary[summary_name]['save_stats'] = save_stats
+                        self.summary[summary_name]['output_file_path'] = output_file_path
+                        self.summary[summary_name]['channels'] = []
+                    
+                    self.summary[summary_name]['channels'].append({'channel': channel, 'summary': summary})
+            else:
+                result = self.analyzer.analyze(signal=signal, sampling_rate=sampling_rate)
+                # todo: add another code
+                renderer, summary = self.handle(
+                    file_path=file_path,
+                    channel=channel,
+                    time_frame=None,
+                    freq_frame=(min_freq, max_freq),
+                    result=result,
+                    # min_display_freq=min_display_freq
+                )
+                self.results.append({
+                    'renderer': renderer,
+                    'summary': summary,
+                    'channel': channel,
+                    'id': self.id
+                })
+                summary_name = f"{file_name}"
+                if summary_name not in self.summary:
+                    self.summary[summary_name] = {}
+                    self.summary[summary_name]['save_stats'] = save_stats 
+                    self.summary[summary_name]['output_file_path'] = output_file_path 
+                    self.summary[summary_name]['channels'] = []
+                self.summary[summary_name]['channels'].append({'channel': channel, 'summary': summary})
+                    
     
+    def handle(self, file_path: str, channel: str, time_frame, freq_frame, result):
+        frequencies, psd = result
+        y_units = self.file_reader.get_y_units(channel=channel)
+        unit_type = detect_unit_type(y_units)
+        
+        psd_g = self.analyzer.convert_psd_to_g(psd, unit_type)
+        
+        file_name = get_filename_without_extension(file_path)
+        
+        renderer = PlotRenderer(xdata=frequencies, ydata=psd_g)
+        
+        peak_index = numpy.argmax(psd_g)
+        max_x = frequencies[peak_index]
+        max_y = psd_g[peak_index]
+        
+        renderer.set_peaks([{'x': max_x, 'y': max_y}])
+        
+        renderer.set_title(f"{file_name} ({channel})")
+       
+        
+        y_label_text = self.lang.get("ui.psd")
+        y_label_unit = self.lang.get("ui.unit_psd")
+        # y_label_text += f"({y_units})" if y_units else ""
+        renderer.set_ylabel(f"{y_label_text} ({y_label_unit})")
+        
+        hz = self.lang.get("ui.hz")
+        x_label_text = f"{self.lang.get("ui.frequency")} ({self.lang.get("ui.hz")})"
+        renderer.set_xlabel(x_label_text)
+        renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} {hz})")
+        renderer.set_xlim((freq_frame[0], freq_frame[1]))
+        renderer.set_ylim((0, max_y * 1.3))
+        summary = f"{max_y:.2f}{' ' + y_units if y_units else ''}, {max_x:.2f} {hz}"
+        
+        return renderer, summary
     
+    def render_graphs(self):
+        groupped = group_by(self.results, 'id')
+        
+        for id in groupped.keys():
+            method_name = deep_get(self.settings, ['method', 'name'], '')
+            channel_groups = deep_get(self.settings, ['groups_settings', 'groups'], [])
+            single_image_group = deep_get(self.settings, ['groups_settings', 'single_image_group'], False)
+            show_graph = deep_get(self.settings, ['show_graph'], False)
+            
+            file_name = get_filename_without_extension(self.settings['file_path'])
+            
+            path_arr = []
+            output_path = deep_get(self.settings, ['output_path'], '')
+            if output_path:
+                path_arr.append(output_path)
+            
+            path_arr.append(method_name)
+            path_arr.append(file_name)
+            
+            def get_groupped_channels(data, channel_group):
+                grouped_channels = []
+                for i, ch in enumerate(channel_group):
+                    ch_result_index = find_index(data, lambda v: v['channel'] == ch)
+                    if ch_result_index >= 0:
+                        grouped_channels.append(data[ch_result_index]['renderer'])
+                    else:
+                        Logger.error(self.lang.get("logger.no_channel_in_computation_results", channel=ch))
+                
+                return grouped_channels
+            
+            def save_graph(grouped_channels: list, show_graph: bool, path: str, single_image_group: bool):
+                if single_image_group:
+                    PlotRenderer.save_multiple_on_single_plot(plots=grouped_channels, show_graph=show_graph, path=path)
+                else:
+                    PlotRenderer.save_multiply(plots=grouped_channels, show_graph=show_graph, path=path)
+                    
+            valid_path = ensure_path_from_parts(path_arr)
+            if len(channel_groups) > 0:
+                groupped_by_tf_id = group_by(groupped[id], 'tf_id')
+                tf_ids = groupped_by_tf_id.keys()
+                for channel_group in channel_groups:
+                    group_file_name = "_".join(channel_group)
+                    
+                    if len(tf_ids) > 0:
+                        for tf_id in tf_ids:
+                            path_arr_tf_id = path_arr[:]
+                            timeframe_settings = self.get_timeframe_settings_by_id(settings=self.settings, target_id=tf_id)
+                            grouped_channels = get_groupped_channels(groupped_by_tf_id[tf_id], channel_group)
+                            path_arr_tf_id.append(timeframe_settings['name'])
+                            valid_path = ensure_path_from_parts(path_arr_tf_id)
+                            
+                            save_graph(
+                                grouped_channels=grouped_channels, 
+                                show_graph=show_graph, 
+                                path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}", 
+                                single_image_group=single_image_group
+                            )
+                    else:
+                        grouped_channels = get_groupped_channels(groupped[id], channel_group)
+                        save_graph(
+                            grouped_channels=grouped_channels, 
+                            show_graph=show_graph, 
+                            path=valid_path + f"//{group_file_name}{DEFAULT_IMG_EXTENSION}", 
+                            single_image_group=single_image_group
+                        )
+                        
+            else:
+                "save by one file"
+                for result in groupped[id]:
+                    
+                    renderer = result['renderer']
+                    channel = result['channel']
+                    path_arr_copy = path_arr[:]
+                    if 'tf_id' in result:
+                        timeframe_settings = self.get_timeframe_settings_by_id(settings=self.settings, target_id=result['tf_id'])
+                        path_arr_copy.append(timeframe_settings['name'])
+                        
+                    valid_path = ensure_path_from_parts(path_arr_copy)
+                    renderer.save(path=valid_path + f"//{channel}{DEFAULT_IMG_EXTENSION}")
+                    if show_graph:
+                        renderer.show()

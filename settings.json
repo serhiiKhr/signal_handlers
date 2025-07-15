@@ -1,0 +1,24 @@
+{
+    "source_program": "mera",
+    "channels": [
+        "Yпп",
+        "Xпп",
+        "Zзп"
+    ],
+    "method": {
+        "window": "hann",
+        "nperseg": 4096,
+        "min_freq": 5.0,
+        "max_freq": 2000.0,
+        "overlap_percent": 50,
+        "scaling": "density",
+        "name": "psd"
+    },
+    "show_graph": true,
+    "files": [
+        {
+            "file_path": "D:/MERA/6-я от 11.05.23/Замер3/Замер3.mera",
+            "time_frames": []
+        }
+    ]
+}

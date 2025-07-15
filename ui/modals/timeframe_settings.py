@@ -61,10 +61,6 @@ class TimeframeSettings(BaseSettingsDialog):
         }
         
         return self._result
-        
-
-    def get_rows(self):
-        return self.rows
     
     def get_settings(self):
         return self._result

@@ -10,7 +10,7 @@ from utils.language_manager import LanguageManager
 from utils.logger import Logger
 
 from .cached_data import CachedData
-from .methods_handlers import BaseHandler, STFTHandler
+from .methods_handlers import BaseHandler, STFTHandler, PSDHandler
 
 class SignalEngine:
     def __init__(self, settings):
@@ -113,6 +113,14 @@ class SignalEngine:
             handler.run(signals=cached_data)
             handler.render_graphs()
             self.summary = {**self.summary, **handler.get_summary()}
+            
+        if method_name == 'psd':
+            # handle PSD 
+            handler = PSDHandler(id=id, settings=settings)
+            handler.run(signals=cached_data)
+            handler.render_graphs()
+            self.summary = {**self.summary, **handler.get_summary()}
+            
         else:
             self.log_error(message=self.lang.get("logger.method_not_implemented", method_name=method_name))
             return

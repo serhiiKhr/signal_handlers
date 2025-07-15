@@ -57,7 +57,7 @@ class BaseSettingsDialog:
 
     def get_rows(self):
         """The line number where build_ui ends, to correctly position the OK button."""
-        Logger.warning(self.lang.get('logger.must_be_overridden', method="get_row"))
+        Logger.warning(self.lang.get('logger.must_be_overridden', method="get_rows"))
         return
     
     def on_change(self):

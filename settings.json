@@ -1,0 +1,27 @@
+{
+    "source_program": "dewesoft",
+    "channels": [
+        "AI A-1",
+        "AI A-2"
+    ],
+    "method": {
+        "window": "hann",
+        "nperseg": 4096,
+        "min_freq": 5,
+        "max_freq": 2000,
+        "overlap_percent": 50,
+        "min_display_freq": 100,
+        "name": "stft"
+    },
+    "show_graph": false,
+    "files": [
+        {
+            "file_path": "C:/Users/user/Desktop/13 11.06/test.dxd",
+            "time_frames": []
+        }
+    ],
+    "stats_settings": {
+        "save_stats": true,
+        "output_file_path": "C:/Users/user/Desktop/13 11.06"
+    }
+}

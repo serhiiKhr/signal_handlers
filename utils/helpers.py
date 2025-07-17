@@ -1,4 +1,8 @@
 import os
+import re
+from typing import Union, Tuple
+
+from .constants import UNITS
 
 def deep_get(d, keys, default=None):
     for key in keys:
@@ -47,3 +51,41 @@ def ensure_path_from_parts(parts: list[str]) -> str:
     path = os.path.join(*parts)
     os.makedirs(path, exist_ok=True)
     return path
+
+def detect_unit_type(unit_str: str) -> str:
+    """
+    Определяет тип единицы измерения по строке.
+    Возвращает: 'm/s²' или 'g'
+    """
+    if not unit_str:
+        raise ValueError("detect_unit_type empty  string error")
+
+    u = unit_str.lower()
+    u = u.replace(" ", "")
+    u = u.replace("^", "")
+    u = u.replace("²", "2")
+    u = u.replace("сек", "s")
+    u = u.replace(",", ".")
+
+    mps2_patterns = [
+        r"м/?с2", r"мс2", r"м/с2", r"m/s2", r"mps2", r"мс-2", r"m/s²", r"м/с²"
+    ]
+
+    g_patterns = [
+        r"\bg\b", r"\bgforce\b", r"\bg²\b", r"\bg2\b", r"\bг\b", r"g/Hz", r"gperhz", r"g\^2", r"g²"
+    ]
+
+    for pattern in mps2_patterns:
+        if re.search(pattern, u):
+            return UNITS['ACCEL_MS2']
+
+    for pattern in g_patterns:
+        if re.search(pattern, u):
+            return UNITS['ACCEL_G']
+
+    raise ValueError(f"Cannot detect unit type: {unit_str}")
+
+def format_seconds(seconds: float) -> Tuple[int, int]:
+    minutes = int(seconds) // 60
+    secs = int(seconds) % 60
+    return (minutes, secs)

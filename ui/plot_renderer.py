@@ -3,6 +3,7 @@ import numpy as np
 from scipy.signal import find_peaks
 from tkinter import ttk, filedialog
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import os
 from datetime import datetime
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -182,7 +183,14 @@ class PlotRenderer:
         ax.set_ylabel(self.ylabel)
         ax.grid(True)
         if self.xlim: ax.set_xlim(*self.xlim)
-        if self.ylim: ax.set_ylim(*self.ylim)
+        if self.ylim: 
+            ax.set_ylim(*self.ylim)
+            
+            fmt = '%.2f'
+            max_y = self.ylim[1]
+            if max_y < 1:
+                fmt = '%.3f'
+            ax.yaxis.set_major_formatter(FormatStrFormatter(fmt))
         
         for peak in self.peaks:
             ax.scatter(peak['x'], peak['y'], color='red', zorder=5, marker='o', facecolors='none', edgecolors='red', s=50, label=lang.get("ui.max"))

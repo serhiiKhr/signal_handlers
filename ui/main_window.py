@@ -9,7 +9,7 @@ import uuid
 
 from .plot_renderer import PlotRenderer
 
-from analyzers import STFT, Filter
+from analyzers import STFT, PSD, Filter
 from utils.helpers import get_filename_without_extension, get_file_path, find_index
 from utils.constants import FREQ_FRAMES, SOURCE_PROGRAMS
 from utils.csv_creator import save_data_to_csv
@@ -19,7 +19,7 @@ from utils.logger import Logger
 
 from engine import SignalEngine 
 
-from .modals import STFTSettings, TimeframeSettings
+from .modals import STFTSettings, PSDSettings, TimeframeSettings
 
 
 class ToolTip:
@@ -71,7 +71,7 @@ class MainWindow:
         
         self.readers = readers
         self.reader_instance = None
-        self.analyzers = [getattr(a, "label", a.__name__) for a in analyzers]
+        self.analyzers = analyzers
         self.file_path = None
         
         self.source_program = None
@@ -220,13 +220,15 @@ class MainWindow:
         self.toggle_crop_widgets()
 
         ttk.Label(self.frm, text=self.lang.get("ui.analysis_method")).grid(column=0, row=row, sticky='e', pady=5)
-        self.analyzer_combo = ttk.Combobox(self.frm, values=self.analyzers)
+        self.analyzer_combo = ttk.Combobox(self.frm, values=[getattr(a, "label", a.__name__) for a in self.analyzers])
     
         if self.analyzers:
             self.analyzer_combo.current(0)
             self.analyzer_combo.grid(column=1, row=row, pady=5)      
         row += 1
-        self.get_default_settings(analys=self.analyzer_combo.get())
+        self.method_settings = self.get_default_settings(analys=self.analyzer_combo.get())
+        
+        self.analyzer_combo.bind("<<ComboboxSelected>>", self.on_analyzer_change)
         
 
         ttk.Button(self.frm, text=self.lang.get("ui.settings"), command=self.open_settings_dialog).grid(
@@ -271,6 +273,17 @@ class MainWindow:
             column=1, row=row, sticky='e', pady=10
         )
         
+    def on_analyzer_change(self, event):
+        selected = self.analyzer_combo.get()
+        selected = next((a for a in self.analyzers if getattr(a, "label", a.__name__) == selected), None)
+        selected = getattr(selected, "label", None)
+           
+        # [getattr(a, "label", a.__name__) for a in self.analyzers]
+        print(f"анализатор's: {self.analyzers}")
+        print(f"Выбран анализатор: {selected}")
+        if selected:
+            self.method_settings = self.get_default_settings(analys=selected)
+        
     def open_timeframe_dialog(self, timeframe=None):
         dialog = TimeframeSettings(data=timeframe, timeframes=self.timeframes)
         dialog.open(self.root)
@@ -285,7 +298,6 @@ class MainWindow:
             self.toggle_crop_widgets()
     
     def edit_timeframe(self, timeframe):
-        print('edit', timeframe)
         dialog = TimeframeSettings(data=timeframe, timeframes=self.timeframes)
         dialog.open(self.root)
         result = dialog.get_settings()
@@ -295,6 +307,7 @@ class MainWindow:
             self.render_timeframes(self.timeframes_frame, self.timeframes)
             
     def delete_timeframe(self, timeframe):
+        print('timeframe =>', timeframe)
         self.timeframes = [tf for tf in self.timeframes if tf["id"] != timeframe["id"]]
         self.render_timeframes(self.timeframes_frame, self.timeframes)
         if len(self.timeframes) == 0:
@@ -311,7 +324,7 @@ class MainWindow:
                 for ch in child.winfo_children():
                     ch.configure(state=state)
             except tk.TclError:
-                pass  # Некоторые виджеты (например, Label) не поддерживают 'state'
+                pass  # some widgets (Label for example) does not support 'state'
            
    
         
@@ -340,6 +353,16 @@ class MainWindow:
                     **settings,
                     'name': 'stft'
                 }
+        elif analys == getattr(PSD, 'label', __name__):
+            
+            dialog = PSDSettings(data=self.method_settings)
+            dialog.open(self.root)
+            settings = dialog.get_settings()
+            if settings:
+                self.method_settings = {
+                    **settings,
+                    'name': 'psd'
+                }
         else:
             Logger.warning(self.lang.get("logger.unknown_method", method=analys))
             return
@@ -348,18 +371,28 @@ class MainWindow:
         if analys == getattr(STFT, 'label', __name__):
             dialog = STFTSettings()
             settings = dialog.get_settings()
-            self.method_settings = {
+            
+            return {
                 **settings,
                 'name': 'stft'
             }
-            Logger.debug(f'self.method_settings: {self.method_settings}')
+            
+        elif analys == getattr(PSD, 'label', __name__):
+            dialog = PSDSettings()
+            settings = dialog.get_settings()
+            
+            return {
+                **settings,
+                'name': 'psd'
+            }
         else:
             Logger.warning(self.lang.get("logger.unknown_method", method=analys))
-            return            
+            return None           
         
     def load_file(self, reader):
-        self.file_path = reader.load()
-        if self.file_path:
+        path = reader.load()
+        if path:
+            self.file_path = path
             self.reader_instance = reader(filepath=self.file_path)
             channels = self.reader_instance.get_channels()
             self.source_program = reader.id
@@ -426,10 +459,33 @@ class MainWindow:
             save_stats=self.save_stats.get(),
             stats_path=self.stats_path.get(),
             show_graph=self.show_graph.get()
-        )        
+        )
+        
         executor = SignalEngine(settings=settings)
         
         executor.start()
 
     def run(self):
         self.root.mainloop()
+        
+        
+        # settings ==> {
+        #     'source_program': 'dewesoft', 
+        #     'channels': ['AI A-1', 'AI A-2', 'AI A-3'], 
+        #     'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'scaling': 'density', 'name': 'psd'}, 
+        #     'show_graph': False, 
+        #     'files': [
+        #         {'file_path': 'C:/Users/user/Desktop/13 11.06/test.dxd', 'time_frames': []}
+        #     ], 
+        #     'stats_settings': {'save_stats': True, 'output_file_path': 'C:/Users/user/Desktop/13 11.06'}
+        #     }
+        # settings ==> {
+        #     'source_program': 'dewesoft', 
+        #     'channels': ['AI A-1', 'AI A-2', 'AI A-3'], 
+        #     'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'min_display_freq': 100, 'name': 'stft'}, 
+        #     'show_graph': False, 
+        #     'files': [
+        #         {'file_path': 'C:/Users/user/Desktop/13 11.06/test.dxd', 'time_frames': []}
+        #     ], 
+        #     'stats_settings': {'save_stats': True, 'output_file_path': 'C:/Users/user/Desktop/13 11.06'}
+        #     }

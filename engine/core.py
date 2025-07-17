@@ -107,6 +107,7 @@ class SignalEngine:
         
         # get handle method name
         method_name = deep_get(file_settings, ['method', 'name'], '')
+        print('method_name ==>', method_name)
         if method_name == 'stft':
             # handle it
             handler = STFTHandler(id=id, settings=settings)
@@ -114,7 +115,7 @@ class SignalEngine:
             handler.render_graphs()
             self.summary = {**self.summary, **handler.get_summary()}
             
-        if method_name == 'psd':
+        elif method_name == 'psd':
             # handle PSD 
             handler = PSDHandler(id=id, settings=settings)
             handler.run(signals=cached_data)

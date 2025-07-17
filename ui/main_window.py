@@ -298,7 +298,6 @@ class MainWindow:
             self.toggle_crop_widgets()
     
     def edit_timeframe(self, timeframe):
-        print('edit', timeframe)
         dialog = TimeframeSettings(data=timeframe, timeframes=self.timeframes)
         dialog.open(self.root)
         result = dialog.get_settings()
@@ -308,6 +307,7 @@ class MainWindow:
             self.render_timeframes(self.timeframes_frame, self.timeframes)
             
     def delete_timeframe(self, timeframe):
+        print('timeframe =>', timeframe)
         self.timeframes = [tf for tf in self.timeframes if tf["id"] != timeframe["id"]]
         self.render_timeframes(self.timeframes_frame, self.timeframes)
         if len(self.timeframes) == 0:
@@ -390,8 +390,9 @@ class MainWindow:
             return None           
         
     def load_file(self, reader):
-        self.file_path = reader.load()
-        if self.file_path:
+        path = reader.load()
+        if path:
+            self.file_path = path
             self.reader_instance = reader(filepath=self.file_path)
             channels = self.reader_instance.get_channels()
             self.source_program = reader.id
@@ -459,14 +460,32 @@ class MainWindow:
             stats_path=self.stats_path.get(),
             show_graph=self.show_graph.get()
         )
-        import json
-
-        with open("settings.json", "w", encoding="utf-8") as f:
-            json.dump(settings, f, indent=4, ensure_ascii=False)
-            
+        
         executor = SignalEngine(settings=settings)
         
         executor.start()
 
     def run(self):
         self.root.mainloop()
+        
+        
+        # settings ==> {
+        #     'source_program': 'dewesoft', 
+        #     'channels': ['AI A-1', 'AI A-2', 'AI A-3'], 
+        #     'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'scaling': 'density', 'name': 'psd'}, 
+        #     'show_graph': False, 
+        #     'files': [
+        #         {'file_path': 'C:/Users/user/Desktop/13 11.06/test.dxd', 'time_frames': []}
+        #     ], 
+        #     'stats_settings': {'save_stats': True, 'output_file_path': 'C:/Users/user/Desktop/13 11.06'}
+        #     }
+        # settings ==> {
+        #     'source_program': 'dewesoft', 
+        #     'channels': ['AI A-1', 'AI A-2', 'AI A-3'], 
+        #     'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'min_display_freq': 100, 'name': 'stft'}, 
+        #     'show_graph': False, 
+        #     'files': [
+        #         {'file_path': 'C:/Users/user/Desktop/13 11.06/test.dxd', 'time_frames': []}
+        #     ], 
+        #     'stats_settings': {'save_stats': True, 'output_file_path': 'C:/Users/user/Desktop/13 11.06'}
+        #     }

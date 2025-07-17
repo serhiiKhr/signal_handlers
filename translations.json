@@ -75,7 +75,9 @@
       "graphs": "Графіки",
       "without_name": "Без назви",
       "summary_plot": "Зведений графік",
-      "formatted_time": "На {min} хв {sec} сек"
+      "formatted_time": "На {min} хв {sec} сек",
+      "formated_time_from": "від {min} хв {sec} сек",
+      "formated_time_to": "до {min} хв {sec} сек"
     },
     "logger": {
       "app_started": "Програму запущено.",
@@ -186,7 +188,9 @@
       "graphs": "Графики",
       "without_name": "Без названия",
       "summary_plot": "Сводный график",
-      "formatted_time": "На {min} мин {sec} сек"
+      "formatted_time": "На {min} мин {sec} сек",
+      "formated_time_from": "с {min} мин {sec} сек",
+      "formated_time_to": "по {min} мин {sec} сек"
     },
     "logger": {
       "app_started": "Программа запущена.",
@@ -297,7 +301,9 @@
       "graphs": "Graphs",
       "without_name": "Without name",
       "summary_plot": "Summary plot",
-      "formatted_time": "At {min} min {sec} sec"
+      "formatted_time": "At {min} min {sec} sec",
+      "formated_time_from": "from {min} min {sec} sec",
+      "formated_time_to": "to {min} min {sec} sec"
     },
     "logger": {
       "app_started": "Application started.",

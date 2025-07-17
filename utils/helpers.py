@@ -1,5 +1,7 @@
 import os
 import re
+from typing import Union, Tuple
+
 from .constants import UNITS
 
 def deep_get(d, keys, default=None):
@@ -82,3 +84,8 @@ def detect_unit_type(unit_str: str) -> str:
             return UNITS['ACCEL_G']
 
     raise ValueError(f"Cannot detect unit type: {unit_str}")
+
+def format_seconds(seconds: float) -> Tuple[int, int]:
+    minutes = int(seconds) // 60
+    secs = int(seconds) % 60
+    return (minutes, secs)

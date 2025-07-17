@@ -2,7 +2,7 @@ import numpy
 
 from utils.language_manager import LanguageManager
 from utils.logger import Logger
-from utils.helpers import get_file_path, get_filename_without_extension, group_by, deep_get, find_index, ensure_path_from_parts, get_file_path, detect_unit_type
+from utils.helpers import get_file_path, get_filename_without_extension, group_by, deep_get, find_index, ensure_path_from_parts, get_file_path, detect_unit_type, format_seconds
 from utils.csv_creator import save_data_to_csv
 
 from ui.plot_renderer import PlotRenderer
@@ -359,7 +359,7 @@ class PSDHandler(BaseHandler):
         # min_display_freq = deep_get(self.settings, ['method', 'min_display_freq'], None)
         
         save_stats = deep_get(self.settings, ['save_stats'], False)
-        output_file_path = deep_get(self.settings, ['output_fil_path'], '')
+        output_file_path = deep_get(self.settings, ['output_file_path'], '')
         
         self.file_reader = BaseHandler.get_file_reader(source_program=source_program, file_path=file_path)
         
@@ -440,6 +440,11 @@ class PSDHandler(BaseHandler):
         peak_index = numpy.argmax(psd_g)
         max_x = frequencies[peak_index]
         max_y = psd_g[peak_index]
+        max_y_graph = max_y * 1.3
+        fmt = '%.2f'
+        if max_y_graph < 1:
+            fmt = '%.3f'
+        
         
         renderer.set_peaks([{'x': max_x, 'y': max_y}])
         
@@ -454,10 +459,22 @@ class PSDHandler(BaseHandler):
         hz = self.lang.get("ui.hz")
         x_label_text = f"{self.lang.get("ui.frequency")} ({self.lang.get("ui.hz")})"
         renderer.set_xlabel(x_label_text)
-        renderer.set_description(f"{max_y:.2f} {y_units if y_units else ''} ({max_x:.2f} {hz})")
+        description_line = f"{fmt % max_y} {y_label_unit if y_label_unit else ''} ({max_x:.2f} {hz})"
+        
+        if time_frame:
+            description_line_2 = ""
+            description_line_2 += time_frame['name']
+            start_min, start_sec = format_seconds(time_frame['start_time'])
+            end_min, end_sec = format_seconds(time_frame['end_time'])
+            description_line_2 += " "
+            description_line_2 += f"({self.lang.get("plot.formated_time_from", min=start_min, sec=start_sec)} {self.lang.get("plot.formated_time_to", min=end_min, sec=end_sec)})"
+            description_line += "\n" + description_line_2
+            
+        
+        renderer.set_description(f"{description_line}")
         renderer.set_xlim((freq_frame[0], freq_frame[1]))
         renderer.set_ylim((0, max_y * 1.3))
-        summary = f"{max_y:.2f}{' ' + y_units if y_units else ''}, {max_x:.2f} {hz}"
+        summary = f"{fmt % max_y}{' ' + y_label_unit if y_label_unit else ''}, {max_x:.2f} {hz}"
         
         return renderer, summary
     

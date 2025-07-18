@@ -86,6 +86,9 @@ class MainWindow:
         self.method_settings = None
         
         self.timeframes: List[Timeframe] = []
+        
+        self.channels = []
+        self.selected_channels = {}
 
         # self.timeframes.append({"id": '1', "name": "test 1", "start": 0.01, "end": 1.00})
         # self.timeframes.append({"id": '2', "name": "test 2", "start": 1.01, "end": 33.00})
@@ -112,7 +115,25 @@ class MainWindow:
                 
             except Exception as e:
                 traceback.format_exc()
-                Logger.error(self.lang.get("logger.file_read_error", error=e))        
+                Logger.error(self.lang.get("logger.file_read_error", error=e))
+                
+    def render_channels(self, channels_frame, channels):
+        for child in channels_frame.winfo_children():
+            child.destroy()
+            
+        self.selected_channels = {}
+        for channel in channels:
+            row_frame = ttk.Frame(channels_frame, width=300)
+            row_frame.pack(fill="x", padx=5, pady=2)
+            
+            check_var = tk.BooleanVar(value=False)
+            self.selected_channels[channel] = check_var
+            
+           
+            check = tk.Checkbutton(row_frame, text=channel, variable=self.selected_channels[channel])
+            check.grid(row=0, column=1, sticky="e", padx=(0, 2))
+            
+            ToolTip(check, channel)
 
     def render_timeframes(self, timeframes_frame, timeframes):
         for child in timeframes_frame.winfo_children():
@@ -148,6 +169,26 @@ class MainWindow:
             )
             delete_btn.grid(row=0, column=4, sticky="e")
             ToolTip(delete_btn, self.lang.get("ui.delete"))
+            
+    def buidl_frame(self, row):
+        scroll_container = ttk.Frame(self.frm)
+        scroll_container.grid(column=0, row=row, columnspan=2, sticky="w", pady=5)
+        canvas = tk.Canvas(scroll_container, height=100, width=300, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
+
+        frame = ttk.Frame(canvas)
+        frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=False)
+        scrollbar.pack(side="right", fill="y")
+        
+        return frame, scrollbar  
     
     def build_ui(self):
         self.frm = ttk.Frame(self.root, padding=10)
@@ -174,8 +215,15 @@ class MainWindow:
         # Label and channel list
         ttk.Label(self.frm, text=self.lang.get("ui.select_channels")).grid(column=0, row=row, columnspan=2, sticky='w', pady=5)
         row += 1
-        self.channel_list = tk.Listbox(self.frm, height=8, selectmode=tk.MULTIPLE, width=50)
-        self.channel_list.grid(column=0, row=row, columnspan=2, pady=5)
+        
+        
+        channels_list_frame, channels_scrollbar = self.buidl_frame(row)
+        self.channels_list_frame = channels_list_frame
+        
+        self.render_channels(self.channels_list_frame, self.channels)
+        
+        # self.channel_list = tk.Listbox(self.frm, height=8, selectmode=tk.MULTIPLE, width=50)
+        # self.channel_list.grid(column=0, row=row, columnspan=2, pady=5)
         row += 1
         
         self.add_timeframe_button = ttk.Button(self.frm, text=self.lang.get("ui.add_timeframe"), command=self.open_timeframe_dialog)
@@ -185,24 +233,8 @@ class MainWindow:
         row += 1
         ttk.Label(self.frm, text=self.lang.get("ui.start_of_analysis")).grid(column=0, row=row, sticky='w', pady=5)
         
-    
-        scroll_container = ttk.Frame(self.frm)
-        scroll_container.grid(column=0, row=row, columnspan=2, sticky="w", pady=5)
-        
-        canvas = tk.Canvas(scroll_container, height=100, width=300, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
-
-        self.timeframes_frame = ttk.Frame(canvas)
-        self.timeframes_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        canvas.create_window((0, 0), window=self.timeframes_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        canvas.pack(side="left", fill="both", expand=False)
-        scrollbar.pack(side="right", fill="y")
+        timeframes_frame, timeframes_scrollbar = self.buidl_frame(row)
+        self.timeframes_frame = timeframes_frame
         
         self.render_timeframes(self.timeframes_frame, self.timeframes)
         row += 1 
@@ -229,7 +261,6 @@ class MainWindow:
         self.method_settings = self.get_default_settings(analys=self.analyzer_combo.get())
         
         self.analyzer_combo.bind("<<ComboboxSelected>>", self.on_analyzer_change)
-        
 
         ttk.Button(self.frm, text=self.lang.get("ui.settings"), command=self.open_settings_dialog).grid(
             column=1, row=row, sticky='e', pady=10
@@ -277,10 +308,7 @@ class MainWindow:
         selected = self.analyzer_combo.get()
         selected = next((a for a in self.analyzers if getattr(a, "label", a.__name__) == selected), None)
         selected = getattr(selected, "label", None)
-           
-        # [getattr(a, "label", a.__name__) for a in self.analyzers]
-        print(f"анализатор's: {self.analyzers}")
-        print(f"Выбран анализатор: {selected}")
+
         if selected:
             self.method_settings = self.get_default_settings(analys=selected)
         
@@ -314,7 +342,6 @@ class MainWindow:
             self.crop_enabled.set(False)
             self.toggle_crop_widgets()
 
-        
     def toggle_crop_widgets(self):
         value = self.crop_enabled.get()
         state = 'normal' if value else 'disabled'
@@ -326,8 +353,6 @@ class MainWindow:
             except tk.TclError:
                 pass  # some widgets (Label for example) does not support 'state'
            
-   
-        
     def toggle_stats_widgets(self):
         """Enable or disable fields depending on the checkbox state."""
         state = 'normal' if self.save_stats.get() else 'disabled'
@@ -340,7 +365,6 @@ class MainWindow:
         if filepath:
             self.stats_path.set(filepath)
 
-        
     def open_settings_dialog(self):
         analys = self.analyzer_combo.get()
         if analys == getattr(STFT, 'label', __name__):
@@ -394,10 +418,10 @@ class MainWindow:
         if path:
             self.file_path = path
             self.reader_instance = reader(filepath=self.file_path)
-            channels = self.reader_instance.get_channels()
+            self.channels = self.reader_instance.get_channels()
             self.source_program = reader.id
             self.timeframes = []
-            self.update_channels(channels)
+            self.render_channels(self.channels_list_frame, self.channels)
               
       
     def update_channels(self, channels: list):
@@ -411,7 +435,7 @@ class MainWindow:
             self.channel_list.insert(tk.END, channel)
 
     def analyze_selected(self):
-        selected_channels = [self.channel_list.get(i) for i in self.channel_list.curselection()]
+        selected_channels = [channel for channel, var in self.selected_channels.items() if var.get()]
         if not selected_channels:
             messagebox.showwarning(self.lang.get("ui.warning"), self.lang.get("ui.select_at_least_one_channel"))
             return
@@ -467,25 +491,3 @@ class MainWindow:
 
     def run(self):
         self.root.mainloop()
-        
-        
-        # settings ==> {
-        #     'source_program': 'dewesoft', 
-        #     'channels': ['AI A-1', 'AI A-2', 'AI A-3'], 
-        #     'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'scaling': 'density', 'name': 'psd'}, 
-        #     'show_graph': False, 
-        #     'files': [
-        #         {'file_path': 'C:/Users/user/Desktop/13 11.06/test.dxd', 'time_frames': []}
-        #     ], 
-        #     'stats_settings': {'save_stats': True, 'output_file_path': 'C:/Users/user/Desktop/13 11.06'}
-        #     }
-        # settings ==> {
-        #     'source_program': 'dewesoft', 
-        #     'channels': ['AI A-1', 'AI A-2', 'AI A-3'], 
-        #     'method': {'window': 'hann', 'nperseg': 4096, 'min_freq': 5, 'max_freq': 2000, 'overlap_percent': 50, 'min_display_freq': 100, 'name': 'stft'}, 
-        #     'show_graph': False, 
-        #     'files': [
-        #         {'file_path': 'C:/Users/user/Desktop/13 11.06/test.dxd', 'time_frames': []}
-        #     ], 
-        #     'stats_settings': {'save_stats': True, 'output_file_path': 'C:/Users/user/Desktop/13 11.06'}
-        #     }
